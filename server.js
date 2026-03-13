@@ -4,6 +4,7 @@ const os = require('os');
 const path = require('path');
 const fs = require('fs');
 const { execSync } = require('child_process');
+const QRCode = require('qrcode');
 
 const app = express();
 const PORT = 9876;
@@ -98,6 +99,7 @@ app.get('/api/status', (req, res) => {
       lanUrl: a.localUrl ? a.localUrl.replace('localhost', LAN_IP) : null,
       status: s.status,
       lastChecked: s.lastChecked,
+      caddyUrl: a.caddyUrl || null,
       launchAgent: a.launchAgent || null,
       launchAgentPath: a.launchAgentPath || null,
       repo: a.repo || null,
@@ -107,6 +109,12 @@ app.get('/api/status', (req, res) => {
     };
   });
   res.json({ apps, lanIp: LAN_IP, monitorUrl: `http://${LAN_IP}:${PORT}` });
+});
+
+app.get('/api/qr', async (req, res) => {
+  const url = `http://${LAN_IP}:${PORT}`;
+  const dataUrl = await QRCode.toDataURL(url, { width: 200, margin: 1, color: { dark: '#e2e8f0', light: '#1a1d27' } });
+  res.json({ url, dataUrl });
 });
 
 app.get('/api/events', (req, res) => {

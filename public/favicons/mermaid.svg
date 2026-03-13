@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="115" fill="hsl(285,90%,52%)"/>
+  <!-- Participant boxes -->
+  <rect x="68" y="108" width="148" height="82" rx="18" fill="white"/>
+  <rect x="296" y="108" width="148" height="82" rx="18" fill="white"/>
+  <!-- Lifelines -->
+  <line x1="142" y1="190" x2="142" y2="404" stroke="rgba(255,255,255,0.35)" stroke-width="5" stroke-dasharray="18 10"/>
+  <line x1="370" y1="190" x2="370" y2="404" stroke="rgba(255,255,255,0.35)" stroke-width="5" stroke-dasharray="18 10"/>
+  <!-- Forward arrow -->
+  <line x1="154" y1="252" x2="354" y2="252" stroke="white" stroke-width="14" stroke-linecap="round"/>
+  <polygon points="374,252 346,238 346,266" fill="white"/>
+  <!-- Return dashed arrow -->
+  <line x1="358" y1="322" x2="158" y2="322" stroke="rgba(255,255,255,0.65)" stroke-width="14" stroke-linecap="round" stroke-dasharray="28 14"/>
+  <polygon points="138,322 166,308 166,336" fill="rgba(255,255,255,0.65)"/>
+</svg>
