@@ -23,66 +23,51 @@
     --up: #22c55e;
     --down: #ef4444;
     --starting: #f59e0b;
-    --stopped: #64748b;
     --accent: #fff;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--bg); color: var(--text); font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px; }
-  header { padding: 18px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+
+  .wrap { max-width: 900px; margin: 0 auto; padding: 0 24px; }
+  header { padding: 20px 0; border-bottom: 1px solid var(--border); }
   header h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.5px; }
-  .subtitle { color: var(--muted); font-size: 12px; }
-  .badge { background: #fff; color: #0f1117; font-size: 10px; padding: 2px 8px; border-radius: 20px; font-weight: 600; }
-  main { padding: 24px; }
-  .info-bar { display: flex; gap: 24px; margin-bottom: 20px; padding: 12px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
-  .info-item { display: flex; flex-direction: column; gap: 2px; }
-  .info-label { color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
-  .info-val { font-size: 13px; font-weight: 600; }
-  a.info-val { color: var(--accent); text-decoration: none; }
-  a.info-val:hover { text-decoration: underline; }
-  .notify-btn { margin-left: auto; background: #fff; color: #0f1117; border: none; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 12px; font-family: inherit; }
-  .notify-btn:hover { opacity: 0.85; }
-  table { width: 100%; border-collapse: collapse; }
-  thead tr { border-bottom: 2px solid var(--border); }
-  th { text-align: left; padding: 8px 12px; color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; }
-  td { padding: 12px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
-  tr:hover td { background: rgba(255,255,255,0.02); }
-  .status-dot { display: inline-flex; align-items: center; gap: 7px; }
-  .dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .subtitle { color: var(--muted); font-size: 12px; margin-top: 2px; }
+  main { padding: 28px 0; }
+
+  /* Filter bar */
+  .filter-bar { display: flex; align-items: center; gap: 6px; margin-bottom: 20px; }
+  .filter-btn { background: none; border: 1px solid var(--border); color: var(--muted); font-family: inherit; font-size: 11px; padding: 4px 12px; border-radius: 20px; cursor: pointer; transition: all 0.15s; letter-spacing: 0.04em; }
+  .filter-btn:hover { border-color: var(--text); color: var(--text); }
+  .filter-btn.active { background: var(--accent); color: #0f1117; border-color: var(--accent); font-weight: 600; }
+  .filter-btn.active-up { background: var(--up); color: #0f1117; border-color: var(--up); font-weight: 600; }
+  .filter-btn.active-down { background: var(--down); color: #fff; border-color: var(--down); font-weight: 600; }
+
+  /* Table */
+  table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  thead tr { border-bottom: 1px solid var(--border); }
+  th { padding: 8px 12px; color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; text-align: left; }
+  th.right { text-align: right; }
+  td { padding: 16px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr { cursor: pointer; transition: background 0.1s; }
+  tbody tr:hover td { background: rgba(255,255,255,0.025); }
+
+  /* Status dot */
+  .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
   .dot.up { background: var(--up); box-shadow: 0 0 6px var(--up); }
   .dot.down { background: var(--down); box-shadow: 0 0 6px var(--down); animation: pulse 1.5s infinite; }
   .dot.starting { background: var(--starting); box-shadow: 0 0 6px var(--starting); animation: pulse 1s infinite; }
-  .dot.stopped { background: var(--stopped); }
+  .dot.unknown { background: var(--muted); }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  .app-name { font-weight: 600; font-size: 13px; color: var(--text); text-decoration: none; }
+  .app-name:hover { text-decoration: underline; }
+  .checked { color: var(--muted); font-size: 11px; }
+  .no-apps { text-align: center; padding: 60px; color: var(--muted); }
+
   .status-text.up { color: var(--up); }
   .status-text.down { color: var(--down); }
   .status-text.starting { color: var(--starting); }
-  .status-text.stopped { color: var(--stopped); }
-  .btn { background: var(--surface); border: 1px solid var(--border); color: var(--text); width: 28px; height: 28px; border-radius: 5px; cursor: pointer; font-size: 13px; font-family: inherit; transition: all 0.15s; display: inline-flex; align-items: center; justify-content: center; }
-  .btn:hover { border-color: #fff; color: #fff; }
-  .btn.danger:hover { border-color: var(--down); color: var(--down); }
-  .btn-group { display: flex; gap: 6px; }
-  .link { color: var(--accent); text-decoration: none; font-size: 11px; }
-  .link:hover { text-decoration: underline; }
-  .pid { color: var(--muted); font-size: 11px; }
-  .restarts { color: var(--muted); font-size: 11px; }
-  .restarts.warn { color: var(--starting); }
-  .log-panel { display: none; background: #0a0c12; border: 1px solid var(--border); border-radius: 6px; padding: 12px; margin-top: 16px; max-height: 220px; overflow-y: auto; font-size: 11px; line-height: 1.6; color: #94a3b8; }
-  .log-panel.open { display: block; }
-  .no-apps { text-align: center; padding: 60px; color: var(--muted); }
-  .checked { color: var(--muted); font-size: 10px; }
-  .toast-container { position: fixed; top: 16px; right: 16px; display: flex; flex-direction: column; gap: 8px; z-index: 100; }
-  .toast { background: var(--surface); border: 1px solid var(--down); color: var(--text); padding: 10px 16px; border-radius: 8px; font-size: 12px; animation: slideIn 0.2s ease; max-width: 320px; }
-  @keyframes slideIn { from{transform:translateX(100%);opacity:0} to{transform:none;opacity:1} }
-  .disabled-row td { opacity: 0.4; }
-  tbody tr { cursor: pointer; }
-
-  @media (min-width: 700px) and (max-width: 800px) and (orientation: portrait) {
-    td { padding: 18px 12px; }
-    .dot { width: 12px; height: 12px; }
-    body { font-size: 15px; }
-    td img { width: 36px !important; height: 36px !important; }
-    th { font-size: 11px; }
-  }
 
   /* Modal */
   .modal-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); backdrop-filter:blur(4px); z-index:200; align-items:center; justify-content:center; }
@@ -92,57 +77,157 @@
   .modal-title { font-size:16px; font-weight:700; }
   .modal-close { position:absolute; top:16px; right:16px; background:none; border:none; color:var(--muted); cursor:pointer; font-size:18px; line-height:1; }
   .modal-close:hover { color:#fff; }
-  .modal-rows { display:flex; flex-direction:column; gap:0; }
+  .modal-rows { display:flex; flex-direction:column; }
   .modal-row { display:flex; align-items:flex-start; padding:10px 0; border-bottom:1px solid var(--border); gap:16px; }
   .modal-row:last-child { border-bottom:none; }
   .modal-key { color:var(--muted); font-size:10px; text-transform:uppercase; letter-spacing:0.08em; white-space:nowrap; flex-shrink:0; width:110px; }
-  .modal-val { font-size:12px; text-align:left; word-break:break-all; }
+  .modal-val { font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
   .modal-val a { color:#fff; text-decoration:none; }
   .modal-val a:hover { text-decoration:underline; }
-  .modal-val .copy-btn { background:none; border:none; color:var(--muted); cursor:pointer; font-size:11px; margin-left:6px; }
-  .modal-val .copy-btn:hover { color:#fff; }
+  .copy-btn { background:none; border:none; color:var(--muted); cursor:pointer; font-size:11px; margin-left:6px; }
+  .copy-btn:hover { color:#fff; }
+
+  /* Header indicators */
+  .hdr-ind { display:flex; align-items:center; gap:5px; font-size:10px; color:var(--muted); letter-spacing:0.03em; }
+  .hdr-ind-val { font-size:10px; font-weight:700; color:var(--text); }
+  .hdr-ind-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+  .hdr-ind-dot.green    { background:#22c55e; box-shadow:0 0 4px #22c55e55; }
+  .hdr-ind-dot.yellow   { background:#f59e0b; box-shadow:0 0 4px #f59e0b55; animation:pulse 2s infinite; }
+  .hdr-ind-dot.red      { background:#ef4444; box-shadow:0 0 5px #ef444455; animation:pulse 1.5s infinite; }
+  .hdr-ind-dot.critical { background:#ff4444; box-shadow:0 0 7px #ff444499; animation:pulse 0.8s infinite; }
+
+  /* Local-only badge */
+  .local-badge { display:inline-flex; align-items:center; gap:5px; background:rgba(100,116,139,0.12); border:1px solid rgba(100,116,139,0.25); border-radius:20px; padding:3px 10px; font-size:10px; color:var(--muted); letter-spacing:0.05em; }
+  .local-badge::before { content:''; width:6px; height:6px; border-radius:50%; background:#64748b; display:inline-block; }
+
+  /* System warning banner */
+  .sys-banner { padding:8px 0; margin-bottom:18px; display:none; }
+  .sys-banner.show { display:block; }
+  .sys-banner-inner { display:flex; align-items:center; gap:10px; padding:10px 14px; border-radius:8px; font-size:12px; font-weight:500; }
+  .sys-banner-inner.yellow { background:rgba(245,158,11,0.12); border:1px solid rgba(245,158,11,0.3); color:#f59e0b; }
+  .sys-banner-inner.red    { background:rgba(239,68,68,0.12);  border:1px solid rgba(239,68,68,0.3);  color:#ef4444; }
+  .sys-banner-inner.critical { background:rgba(239,68,68,0.2); border:1px solid rgba(239,68,68,0.5); color:#ff6b6b; }
+
+  /* Memory summary strip */
+  .mem-strip { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:22px; }
+  @media(max-width:600px){ .mem-strip{grid-template-columns:repeat(2,1fr);} }
+  .mem-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px 14px; }
+  .mem-card-label { font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:6px; }
+  .mem-card-val { font-size:16px; font-weight:700; letter-spacing:-0.5px; }
+  .mem-card-sub { font-size:10px; color:var(--muted); margin-top:2px; }
+  .mem-bar-wrap { height:4px; background:rgba(255,255,255,0.08); border-radius:2px; margin-top:8px; overflow:hidden; }
+  .mem-bar { height:100%; border-radius:2px; transition:width 0.4s ease; }
+  .mem-bar.green    { background:#22c55e; }
+  .mem-bar.yellow   { background:#f59e0b; }
+  .mem-bar.red      { background:#ef4444; }
+  .mem-bar.critical { background:#ff4444; box-shadow:0 0 8px rgba(255,68,68,0.6); }
+
+  /* Claude session cards */
+  .section-title { font-size:10px; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); font-weight:600; margin-bottom:12px; margin-top:28px; }
+  .claude-cards { display:flex; flex-direction:column; gap:8px; margin-bottom:24px; }
+  .claude-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:12px 14px; display:flex; align-items:center; gap:14px; }
+  .claude-card.yellow { border-color:rgba(245,158,11,0.35); }
+  .claude-card.red    { border-color:rgba(239,68,68,0.4); }
+  .claude-card.critical { border-color:rgba(255,68,68,0.6); background:rgba(239,68,68,0.06); }
+  .zone-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+  .zone-dot.green    { background:#22c55e; box-shadow:0 0 5px #22c55e; }
+  .zone-dot.yellow   { background:#f59e0b; box-shadow:0 0 5px #f59e0b; }
+  .zone-dot.red      { background:#ef4444; box-shadow:0 0 5px #ef4444; animation:pulse 1.5s infinite; }
+  .zone-dot.critical { background:#ff4444; box-shadow:0 0 8px #ff4444; animation:pulse 0.8s infinite; }
+  .claude-card-info { flex:1; min-width:0; }
+  .claude-card-name { font-size:12px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .claude-card-meta { font-size:10px; color:var(--muted); margin-top:2px; }
+  .claude-card-mem  { font-size:14px; font-weight:700; letter-spacing:-0.5px; flex-shrink:0; }
+  .claude-card-mem.yellow  { color:#f59e0b; }
+  .claude-card-mem.red     { color:#ef4444; }
+  .claude-card-mem.critical{ color:#ff6b6b; }
+  .no-claude { color:var(--muted); font-size:12px; padding:10px 0; }
+
+  /* Process table */
+  .proc-table-wrap { margin-bottom:32px; }
+  .proc-table { width:100%; border-collapse:collapse; }
+  .proc-table th { padding:7px 10px; color:var(--muted); font-size:10px; text-transform:uppercase; letter-spacing:0.07em; font-weight:600; text-align:left; border-bottom:1px solid var(--border); }
+  .proc-table th.right { text-align:right; }
+  .proc-table td { padding:9px 10px; border-bottom:1px solid rgba(255,255,255,0.04); font-size:11px; vertical-align:middle; }
+  .proc-table tbody tr:last-child td { border-bottom:none; }
+  .proc-table tbody tr:hover td { background:rgba(255,255,255,0.02); }
+  .proc-table td.right { text-align:right; }
+  .type-badge { display:inline-block; font-size:9px; padding:2px 6px; border-radius:4px; font-weight:600; letter-spacing:0.04em; }
+  .type-badge.claude { background:rgba(124,58,237,0.2); color:#a78bfa; border:1px solid rgba(124,58,237,0.3); }
+  .type-badge.chrome { background:rgba(59,130,246,0.15); color:#60a5fa; border:1px solid rgba(59,130,246,0.25); }
+  .type-badge.node   { background:rgba(16,185,129,0.15); color:#34d399; border:1px solid rgba(16,185,129,0.25); }
+  .type-badge.iterm  { background:rgba(245,158,11,0.15); color:#fbbf24; border:1px solid rgba(245,158,11,0.25); }
+  .type-badge.other  { background:rgba(100,116,139,0.15); color:var(--muted); border:1px solid rgba(100,116,139,0.2); }
+  .proc-mem.yellow { color:#f59e0b; }
+  .proc-mem.red    { color:#ef4444; }
+  .proc-mem.critical { color:#ff6b6b; font-weight:700; }
+  .kill-btn { background:none; border:1px solid rgba(239,68,68,0.25); color:rgba(239,68,68,0.6); font-family:inherit; font-size:10px; padding:2px 7px; border-radius:4px; cursor:pointer; transition:all 0.15s; }
+  .kill-btn:hover { background:rgba(239,68,68,0.15); border-color:#ef4444; color:#ef4444; }
+  .pid-btn { background:none; border:none; color:var(--muted); font-family:inherit; font-size:11px; cursor:pointer; padding:0; }
+  .pid-btn:hover { color:#fff; }
+  .proc-filter-bar { display:flex; align-items:center; gap:6px; margin-bottom:14px; }
 </style>
 </head>
 <body>
 
 <header>
-  <div>
-    <h1>Apps Monitor</h1>
-    <div class="subtitle">Process supervisor &amp; health dashboard</div>
-  </div>
-  <div style="display:flex;align-items:center;gap:12px">
-    <span class="badge" id="upCount">—</span>
-    <button id="globalBell" onclick="toggleGlobalAlert()" title="Toggle all alerts" style="background:none;border:none;cursor:pointer;font-size:18px;opacity:1;transition:opacity 0.2s;padding:0">🔔</button>
+  <div class="wrap" style="display:flex;align-items:center;justify-content:space-between;gap:16px">
+    <div>
+      <h1>Apps Monitor</h1>
+      <div id="headerIndicators" style="display:flex;gap:10px;align-items:center;margin-top:6px"></div>
+    </div>
     <div style="position:relative">
-      <button onclick="toggleQR()" title="Show LAN QR code" style="background:none;border:none;cursor:pointer;font-size:18px;padding:0;line-height:1">📱</button>
-      <div id="qrPopover" style="display:none;position:absolute;right:0;top:32px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px;z-index:150;text-align:center;min-width:180px">
-        <div style="font-size:10px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.08em">Open on device</div>
-        <img id="qrImg" src="" style="width:160px;height:160px;border-radius:6px;display:block">
-        <div id="qrUrl" style="font-size:10px;color:var(--muted);margin-top:8px;word-break:break-all"></div>
+      <button id="qrBtn" onclick="toggleQR()" title="Show LAN QR code" style="background:none;border:none;outline:none;cursor:pointer;padding:0;line-height:1;opacity:0.35;transition:opacity 0.15s;-webkit-tap-highlight-color:transparent;user-select:none" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity=document.getElementById('qrPopover').style.display!=='none'?'1':'0.35'">
+        <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="1" y="1" width="8" height="8" rx="1" stroke="white" stroke-width="1.5" fill="none"/>
+          <rect x="3.5" y="3.5" width="3" height="3" fill="white"/>
+          <rect x="13" y="1" width="8" height="8" rx="1" stroke="white" stroke-width="1.5" fill="none"/>
+          <rect x="15.5" y="3.5" width="3" height="3" fill="white"/>
+          <rect x="1" y="13" width="8" height="8" rx="1" stroke="white" stroke-width="1.5" fill="none"/>
+          <rect x="3.5" y="15.5" width="3" height="3" fill="white"/>
+          <rect x="13" y="13" width="2.5" height="2.5" fill="white"/>
+          <rect x="16.5" y="13" width="2.5" height="2.5" fill="white"/>
+          <rect x="13" y="16.5" width="2.5" height="2.5" fill="white"/>
+          <rect x="16.5" y="16.5" width="2.5" height="2.5" fill="white"/>
+        </svg>
+      </button>
+      <div id="qrPopover" style="display:none;position:absolute;right:0;top:36px;background:var(--surface);border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:12px;z-index:150;text-align:center;box-shadow:0 0 0 1px rgba(255,255,255,0.08),0 0 24px rgba(255,255,255,0.12),0 8px 32px rgba(0,0,0,0.6)">
+        <img id="qrImg" src="" style="width:168px;height:168px;border-radius:8px;display:block">
+        <div id="qrUrl" style="font-size:10px;color:var(--muted);margin-top:10px;word-break:break-all;width:168px"></div>
       </div>
     </div>
   </div>
 </header>
 
 <main>
+  <div class="wrap">
 
-  <div id="tableWrap">
+    <!-- System warning banner -->
+    <div class="sys-banner" id="sysBanner">
+      <div class="sys-banner-inner" id="sysBannerInner">
+        <span id="sysBannerIcon">⚠️</span>
+        <span id="sysBannerMsg"></span>
+      </div>
+    </div>
+
+    <div class="section-title" style="margin-top:0">Services</div>
+    <div class="filter-bar">
+      <button class="filter-btn active" id="f-all"  onclick="setFilter('all')">All</button>
+      <button class="filter-btn"        id="f-up"   onclick="setFilter('up')">Up</button>
+      <button class="filter-btn"        id="f-down" onclick="setFilter('down')">Down</button>
+    </div>
     <table>
       <thead>
         <tr>
-          <th>App</th>
-          <th>LaunchAgent</th>
-          <th>Last Checked</th>
+          <th style="width:33%;text-align:left">App</th>
+          <th style="width:34%;text-align:center">Address</th>
+          <th style="width:33%;text-align:right">Checked</th>
         </tr>
       </thead>
       <tbody id="appTable"><tr><td colspan="3" class="no-apps">Loading...</td></tr></tbody>
     </table>
   </div>
-
-
 </main>
-
-<div class="toast-container" id="toasts"></div>
 
 <div class="modal-backdrop" id="modalBackdrop" onclick="closeModal(event)">
   <div class="modal">
@@ -157,119 +242,79 @@
 
 <script>
 let apps = [];
-let alertsOn = localStorage.getItem('alertsOn') !== 'false';
-
-function updateBell() {
-  document.getElementById('globalBell').style.opacity = alertsOn ? '1' : '0.25';
-}
-
-function toggleGlobalAlert() {
-  if (!alertsOn) {
-    Notification.requestPermission().then(p => {
-      if (p === 'granted') { alertsOn = true; localStorage.setItem('alertsOn', 'true'); updateBell(); }
-      else showToast('Permission denied');
-    });
-  } else {
-    alertsOn = false;
-    localStorage.setItem('alertsOn', 'false');
-    updateBell();
-  }
-}
+let filter = 'all';
 
 async function load() {
   const res = await fetch('/api/status');
   const data = await res.json();
   apps = data.apps;
+renderTable();
+}
+
+function setFilter(f) {
+  filter = f;
+  document.getElementById('f-all').className  = 'filter-btn' + (f === 'all'  ? ' active' : '');
+  document.getElementById('f-up').className   = 'filter-btn' + (f === 'up'   ? ' active-up' : '');
+  document.getElementById('f-down').className = 'filter-btn' + (f === 'down' ? ' active-down' : '');
   renderTable();
 }
 
 function renderTable() {
   const tbody = document.getElementById('appTable');
-  const up = apps.filter(a => a.status === 'up').length;
-  document.getElementById('upCount').textContent = `${up}/${apps.length} up`;
-
-  tbody.innerHTML = apps.map(app => `
+  const visible = filter === 'all' ? apps : apps.filter(a => a.status === filter);
+  if (!visible.length) {
+    tbody.innerHTML = `<tr><td colspan="3" class="no-apps">No apps</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = visible.map(app => `
     <tr id="row-${app.id}" onclick="openModal(apps.find(a=>a.id==='${app.id}'))">
       <td>
-        <div style="display:flex;align-items:center;gap:10px">
+        <div style="display:flex;align-items:center;gap:12px">
           <span class="dot ${app.status}"></span>
           ${faviconImg(app.id)}
-          <div><a href="${app.lanUrl || app.localUrl}" target="_blank" style="color:inherit;text-decoration:none;font-weight:700;" onclick="event.stopPropagation()" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${app.name}</a></div>
+          <a class="app-name" href="${app.lanUrl || app.localUrl || '#'}" target="_blank" onclick="event.stopPropagation()">${app.name}</a>
         </div>
       </td>
-
-      <td><span class="pid">${app.launchAgent || '—'}</span></td>
-      <td><span class="checked">${app.lastChecked ? new Date(app.lastChecked).toLocaleTimeString() : '—'}</span></td>
+      <td style="text-align:center"><a href="${app.lanUrl || app.localUrl || '#'}" target="_blank" onclick="event.stopPropagation()" style="color:var(--text);font-size:11px;text-decoration:none">${(app.lanUrl || app.localUrl || '').replace(/^https?:\/\//, '') || '—'}</a></td>
+      <td style="text-align:right;color:var(--muted);font-size:11px">${app.lastChecked ? new Date(app.lastChecked).toLocaleTimeString() : '—'}</td>
     </tr>
   `).join('');
-
 }
 
 const FAVICONS = {
-  'bheng':            '/favicons/bheng.png',
-  'mermaid':          '/favicons/mermaid.png',
-  'stickies':         '/favicons/stickies.png',
-  'think':            '/favicons/think.png',
-  '3pi-poc':          '/favicons/3pi-poc.png',
-  '3pi':              '/favicons/3pi.svg',
-  'drop':             '/favicons/drop.svg',
-  'claude-live':      '/favicons/claude-live.svg',
-  'recap':            '/favicons/recap.svg',
+  'bheng':       '/favicons/bheng.png',
+  'mermaid':     '/favicons/mermaid.svg',
+  'stickies':    '/favicons/stickies.png',
+  'ideas':       '/favicons/ideas.svg',
+  '3pi-poc':     '/favicons/3pi-poc.png',
+  '3pi':         '/favicons/3pi.svg',
+  'drop':        '/favicons/drop.svg',
+  'drop-web':    '/favicons/drop.svg',
+  'claude-live': '/favicons/claude-live.svg',
+  'recap':       '/favicons/recap.svg',
+  'tools':       '/favicons/tools.svg',
 };
 
 function faviconImg(id) {
   const src = FAVICONS[id];
   if (!src) return '';
-  return `<img src="${src}" width="18" height="18" style="border-radius:4px;object-fit:contain;flex-shrink:0" onerror="this.style.display='none'">`;
+  return `<img src="${src}" width="24" height="24" style="border-radius:5px;object-fit:contain;flex-shrink:0" onerror="this.style.display='none'">`;
 }
 
 function escHtml(s) {
   return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-// --- SSE real-time updates ---
+// --- SSE ---
 const es = new EventSource('/api/events');
 es.onmessage = e => {
   const msg = JSON.parse(e.data);
-
   if (msg.type === 'update') {
     const app = apps.find(a => a.id === msg.id);
-    if (app) {
-      app.status = msg.status;
-      renderTable();
-    }
+    if (app) { app.status = msg.status; renderTable(); }
   }
-
-  if (msg.type === 'reload') {
-    location.reload();
-    return;
-  }
-
-  if (msg.type === 'alert') {
-    if (alertsOn) {
-      showToast(`${msg.name} went DOWN`);
-      sendChromeNotification(msg.name);
-    }
-  }
+  if (msg.type === 'reload') { location.reload(); }
 };
-
-// --- Notifications ---
-function sendChromeNotification(appName) {
-  if (Notification.permission !== 'granted') return;
-  new Notification('App Down!', {
-    body: `${appName} is no longer responding`,
-    icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><circle cx="16" cy="16" r="16" fill="%23ef4444"/><text x="16" y="22" text-anchor="middle" font-size="18" fill="white">!</text></svg>'
-  });
-}
-
-function showToast(msg) {
-  const c = document.getElementById('toasts');
-  const t = document.createElement('div');
-  t.className = 'toast';
-  t.textContent = msg;
-  c.appendChild(t);
-  setTimeout(() => t.remove(), 4000);
-}
 
 // --- Modal ---
 function copyText(text, btn) {
@@ -283,7 +328,7 @@ function copyText(text, btn) {
 function pathVal(p) {
   if (!p) return null;
   return `<span style="font-size:11px;word-break:break-all;font-family:'SF Mono',monospace">${escHtml(p)}</span>
-    <button class="copy-btn" onclick="copyText('${p}', this)" title="Copy path">⎘</button>`;
+    <button class="copy-btn" onclick="copyText('${p}', this)" title="Copy">⎘</button>`;
 }
 
 function openModal(app) {
@@ -294,18 +339,19 @@ function openModal(app) {
   const port = app.localUrl ? new URL(app.localUrl).port : null;
 
   const rows = [
-    ['⬤ Status',       `<span class="status-text ${app.status}">${statusLabel}</span>`],
-    app.lastChecked ? ['🕐 Checked',     new Date(app.lastChecked).toLocaleString()] : null,
-    port ?            ['🔌 Port',         port] : null,
-    app.hostname ?    ['🖥 Hostname',     app.hostname] : null,
-    app.repo ?        ['🐙 GitHub',       `<a href="${app.repo}" target="_blank" onclick="event.stopPropagation()">⇗ ${app.repo.replace('https://github.com/','')}</a>`] : null,
-    app.localUrl ?    ['🌐 Local URL',    `<a href="${app.localUrl}" target="_blank" onclick="event.stopPropagation()">${app.localUrl}</a>`] : null,
-    app.lanUrl ?      ['📡 LAN URL',      `<a href="${app.lanUrl}" target="_blank" onclick="event.stopPropagation()">${app.lanUrl}</a>`] : null,
-    app.caddyUrl ?    ['🔗 Caddy URL',    `<a href="${app.caddyUrl}" target="_blank" onclick="event.stopPropagation()">${app.caddyUrl}</a>`] : null,
-    app.localPath ?   ['📁 Local Path',   pathVal(app.localPath)] : null,
-    app.logPath ?     ['📄 Log Path',     pathVal(app.logPath)] : null,
-    app.launchAgent ? ['⚙️ LaunchAgent',  `<span style="font-family:'SF Mono',monospace;font-size:11px">${app.launchAgent}</span>`] : null,
-    app.launchAgentPath ? ['📋 Plist',    pathVal(app.launchAgentPath)] : null,
+    ['⬤ Status',          `<span class="status-text ${app.status}">${statusLabel}</span>`],
+    app.lastChecked ?     ['🕐 Checked',     new Date(app.lastChecked).toLocaleString()] : null,
+    port ?                ['🔌 Port',         port] : null,
+    app.hostname ?        ['🖥 Hostname',     app.hostname] : null,
+    app.repo ?            ['🐙 GitHub',       `<a href="${app.repo}" target="_blank" onclick="event.stopPropagation()">⇗ ${app.repo.replace('https://github.com/','')}</a>`] : null,
+    app.localUrl ?        ['🌐 Local URL',    `<a href="${app.localUrl}" target="_blank" onclick="event.stopPropagation()">${app.localUrl}</a>`] : null,
+    app.lanUrl ?          ['📡 LAN URL',      `<a href="${app.lanUrl}" target="_blank" onclick="event.stopPropagation()">${app.lanUrl}</a>`] : null,
+    app.caddyUrl ?        ['🔗 Caddy URL',    `<a href="${app.caddyUrl}" target="_blank" onclick="event.stopPropagation()">${app.caddyUrl}</a>`] : null,
+    app.prodUrl ?         ['🚀 Prod URL',     `<a href="${app.prodUrl}" target="_blank" onclick="event.stopPropagation()">${app.prodUrl}</a>`] : null,
+    app.localPath ?       ['📁 Local Path',   pathVal(app.localPath)] : null,
+    app.logPath ?         ['📄 Log Path',     pathVal(app.logPath)] : null,
+    app.launchAgent ?     ['⚙️ LaunchAgent',  `<span style="font-family:'SF Mono',monospace;font-size:11px">${app.launchAgent}</span>`] : null,
+    app.launchAgentPath ? ['📋 Plist',        pathVal(app.launchAgentPath)] : null,
   ].filter(Boolean);
 
   document.getElementById('modalRows').innerHTML = rows.map(([k, v]) => `
@@ -327,11 +373,16 @@ document.addEventListener('keydown', e => {
   if (e.key === 'Escape') document.getElementById('modalBackdrop').classList.remove('open');
 });
 
-// --- QR Code ---
+// --- QR ---
 let qrLoaded = false;
 async function toggleQR() {
   const pop = document.getElementById('qrPopover');
-  if (pop.style.display !== 'none') { pop.style.display = 'none'; return; }
+  const btn = document.getElementById('qrBtn');
+  if (pop.style.display !== 'none') {
+    pop.style.display = 'none';
+    btn.style.opacity = '0.35';
+    return;
+  }
   if (!qrLoaded) {
     const data = await fetch('/api/qr').then(r => r.json());
     document.getElementById('qrImg').src = data.dataUrl;
@@ -339,16 +390,190 @@ async function toggleQR() {
     qrLoaded = true;
   }
   pop.style.display = 'block';
+  btn.style.opacity = '1';
 }
 document.addEventListener('click', e => {
   const pop = document.getElementById('qrPopover');
-  if (!pop.contains(e.target) && !e.target.closest('[onclick="toggleQR()"]')) pop.style.display = 'none';
+  const btn = document.getElementById('qrBtn');
+  if (!pop.contains(e.target) && !btn.contains(e.target)) {
+    pop.style.display = 'none';
+    btn.style.opacity = '0.35';
+  }
 });
 
-// --- Init ---
 load();
-updateBell();
 setInterval(load, 15000);
+
+// --- System / memory monitoring ---
+let sysProcs = [];
+
+function fmtMem(mb) {
+  if (mb >= 1024) return (mb / 1024).toFixed(1) + ' GB';
+  return Math.round(mb) + ' MB';
+}
+
+function memZone(mb, type) {
+  if (type === 'claude') {
+    if (mb > 8192) return 'critical';
+    if (mb > 4096) return 'red';
+    if (mb > 1536) return 'yellow';
+    return 'green';
+  }
+  return 'green';
+}
+
+function barClass(pct) {
+  if (pct > 85) return 'critical';
+  if (pct > 75) return 'red';
+  if (pct > 50) return 'yellow';
+  return 'green';
+}
+
+
+function renderSystem(data) {
+  const { stats, procs } = data;
+  sysProcs = procs;
+
+  // --- Header indicators ---
+  const claudeProcsH = procs.filter(p => p.type === 'claude');
+  const chromeProcsH = procs.filter(p => p.type === 'chrome');
+  const claudeMbH = claudeProcsH.reduce((s, p) => s + p.memMb, 0);
+  const chromeMbH = chromeProcsH.reduce((s, p) => s + p.memMb, 0);
+  const claudeZoneH = memZone(claudeMbH, 'claude');
+  const chromeZoneH = chromeMbH > 4096 ? 'red' : chromeMbH > 2048 ? 'yellow' : 'green';
+  document.getElementById('headerIndicators').innerHTML = `
+    <div class="hdr-ind">
+      <img src="/favicons/claude-mascot.svg" width="18" height="18" style="image-rendering:pixelated">
+      <span class="hdr-ind-val" style="color:${claudeZoneH==='green'?'var(--text)':claudeZoneH==='yellow'?'#f59e0b':claudeZoneH==='red'?'#ef4444':'#ff6b6b'}">${fmtMem(claudeMbH)}</span>
+    </div>
+    <div class="hdr-ind">
+      <img src="/favicons/chrome.svg" width="18" height="18">
+      <span class="hdr-ind-val" style="color:${chromeZoneH==='green'?'var(--text)':chromeZoneH==='yellow'?'#f59e0b':'#ef4444'}">${fmtMem(chromeMbH)}</span>
+    </div>`;
+
+  // --- RAM card (macOS: show available, not used — cache fills RAM aggressively) ---
+  const availMb = stats.ram.availMb;
+  const availPct = (availMb / stats.ram.totalMb) * 100;
+  // bar shows "used" visually but label shows available
+  const usedPct = 100 - availPct;
+  const pressure = stats.ram.pressure; // normal | warn | critical
+  const ramZone = pressure === 'critical' ? 'critical' : pressure === 'warn' ? 'yellow' : 'green';
+  document.getElementById('ramVal').textContent = fmtMem(availMb) + ' free';
+  document.getElementById('ramSub').textContent =
+    'of ' + (stats.ram.totalMb / 1024).toFixed(0) + ' GB · pressure: ' + pressure;
+  const ramBar = document.getElementById('ramBar');
+  ramBar.style.width = Math.min(usedPct, 100).toFixed(1) + '%';
+  ramBar.className = 'mem-bar ' + ramZone;
+
+  // --- Swap card ---
+  const swapPct = stats.swap.totalMb > 0 ? (stats.swap.usedMb / stats.swap.totalMb) * 100 : 0;
+  const swapZone = stats.swap.climbing ? 'critical' : (stats.swap.usedMb > 2048 ? 'red' : stats.swap.usedMb > 512 ? 'yellow' : 'green');
+  document.getElementById('swapVal').textContent = fmtMem(stats.swap.usedMb);
+  document.getElementById('swapSub').textContent = stats.swap.totalMb > 0 ? 'of ' + (stats.swap.totalMb / 1024).toFixed(0) + ' GB' : 'swap';
+  const swapBar = document.getElementById('swapBar');
+  swapBar.style.width = (Math.min(swapPct, 100)).toFixed(1) + '%';
+  swapBar.className = 'mem-bar ' + swapZone;
+
+  // --- Aggregate by type ---
+  const claudeProcs = procs.filter(p => p.type === 'claude');
+  const chromeProcs = procs.filter(p => p.type === 'chrome');
+  const claudeMb = claudeProcs.reduce((s, p) => s + p.memMb, 0);
+  const chromeMb = chromeProcs.reduce((s, p) => s + p.memMb, 0);
+  const claudeZone = memZone(claudeMb, 'claude');
+
+  document.getElementById('claudeTotal').textContent = fmtMem(claudeMb);
+  document.getElementById('claudeTotal').className = 'mem-card-val ' + (claudeZone !== 'green' ? claudeZone : '');
+  document.getElementById('claudeCount').textContent = claudeProcs.length + ' session' + (claudeProcs.length !== 1 ? 's' : '');
+  document.getElementById('chromeTotal').textContent = fmtMem(chromeMb);
+  document.getElementById('chromeCount').textContent = chromeProcs.length + ' process' + (chromeProcs.length !== 1 ? 'es' : '');
+
+  // --- System warning banner ---
+  const banner = document.getElementById('sysBanner');
+  const bannerInner = document.getElementById('sysBannerInner');
+  const bannerMsg = document.getElementById('sysBannerMsg');
+  let bannerText = '';
+  let bannerClass = '';
+
+  if (stats.swap.climbing) {
+    bannerText = 'Swap is climbing fast — offloading to disk, things will slow down';
+    bannerClass = 'critical';
+  } else if (pressure === 'critical') {
+    bannerText = `macOS memory pressure: CRITICAL — ${fmtMem(availMb)} available, swap may start`;
+    bannerClass = 'critical';
+  } else if (pressure === 'warn') {
+    bannerText = `macOS memory pressure: WARNING — ${fmtMem(availMb)} available`;
+    bannerClass = 'yellow';
+  } else if (stats.swap.usedMb > 512) {
+    bannerText = `Swap in use: ${fmtMem(stats.swap.usedMb)} — memory was compressed to disk`;
+    bannerClass = 'yellow';
+  }
+
+  if (bannerText) {
+    bannerMsg.textContent = bannerText;
+    bannerInner.className = 'sys-banner-inner ' + bannerClass;
+    banner.classList.add('show');
+  } else {
+    banner.classList.remove('show');
+  }
+
+  // --- Claude session cards ---
+  const cards = document.getElementById('claudeCards');
+  if (!claudeProcs.length) {
+    cards.innerHTML = '<div class="no-claude">No Claude processes detected</div>';
+  } else {
+    cards.innerHTML = claudeProcs.map(p => {
+      const zone = memZone(p.memMb, 'claude');
+      return `
+        <div class="claude-card ${zone}">
+          <div class="zone-dot ${zone}"></div>
+          <div class="claude-card-info">
+            <div class="claude-card-name">${escHtml(p.comm)}</div>
+          </div>
+          <div class="claude-card-mem ${zone}">${fmtMem(p.memMb)}</div>
+        </div>`;
+    }).join('');
+  }
+
+  renderWorst();
+}
+
+function renderWorst() {
+  const top3 = [...sysProcs].sort((a, b) => b.memMb - a.memMb).slice(0, 3);
+  const el = document.getElementById('worstProcs');
+  if (!top3.length) { el.innerHTML = '<div style="color:var(--muted);font-size:12px">No data</div>'; return; }
+  el.innerHTML = top3.map(p => {
+    const name = p.args.split('/').pop().split(' ')[0] || p.comm;
+    return `
+      <div style="display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 14px">
+        <span class="type-badge ${p.type}">${p.type}</span>
+        <span style="flex:1;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(name)}</span>
+        <span style="font-size:13px;font-weight:700;flex-shrink:0">${fmtMem(p.memMb)}</span>
+        <button class="kill-btn" onclick="killProc(${p.pid},this)">kill</button>
+      </div>`;
+  }).join('');
+}
+
+async function killProc(pid, btn) {
+  if (!confirm(`Kill PID ${pid}?`)) return;
+  btn.textContent = '…';
+  btn.disabled = true;
+  try {
+    await fetch('/api/kill/' + pid, { method: 'POST' });
+    setTimeout(loadSystem, 800);
+  } catch {
+    btn.textContent = 'err';
+  }
+}
+
+async function loadSystem() {
+  try {
+    const data = await fetch('/api/system').then(r => r.json());
+    renderSystem(data);
+  } catch {}
+}
+
+loadSystem();
+setInterval(loadSystem, 3000);
 </script>
 </body>
 </html>
