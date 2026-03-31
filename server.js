@@ -6,112 +6,6 @@ const fs = require('fs');
 const { execSync } = require('child_process');
 const QRCode = require('qrcode');
 
-// --- System memory helpers ---
-const SWAP_HISTORY = [];
-const SWAP_HISTORY_MAX = 20;
-
-function getSystemStats() {
-  const totalBytes = os.totalmem();
-
-  // Use vm_stat for accurate available memory (macOS caches fill RAM aggressively)
-  let availMb = null;
-  let wiredMb = null;
-  let compressedMb = null;
-  let pageSize = 16384; // Apple Silicon default; override below
-  try {
-    const vmOut = execSync('vm_stat 2>/dev/null').toString();
-    const pg = vmOut.match(/page size of (\d+) bytes/);
-    if (pg) pageSize = parseInt(pg[1]);
-    const grab = (label) => {
-      const m = vmOut.match(new RegExp(label + ':\\s+(\\d+)'));
-      return m ? parseInt(m[1]) * pageSize : 0;
-    };
-    const free        = grab('Pages free');
-    const inactive    = grab('Pages inactive');
-    const speculative = grab('Pages speculative');
-    const purgeable   = grab('Pages purgeable');
-    wiredMb      = grab('Pages wired down') / 1048576;
-    compressedMb = grab('Pages occupied by compressor') / 1048576;
-    availMb = (free + inactive + speculative + purgeable) / 1048576;
-  } catch {}
-
-  const usedMb  = availMb !== null ? (totalBytes / 1048576) - availMb : (totalBytes - os.freemem()) / 1048576;
-  const totalMb = totalBytes / 1048576;
-  const usedPct = (usedMb / totalMb) * 100;
-
-  // macOS memory pressure level
-  let pressure = 'normal'; // normal | warn | critical
-  try {
-    const mp = execSync('/usr/bin/memory_pressure 2>/dev/null').toString();
-    if (/CRITICAL/i.test(mp)) pressure = 'critical';
-    else if (/WARNING/i.test(mp)) pressure = 'warn';
-  } catch {}
-
-  let swapUsedMb = 0, swapTotalMb = 0;
-  try {
-    const sv = execSync('sysctl vm.swapusage 2>/dev/null').toString();
-    const m = sv.match(/total\s*=\s*([\d.]+)(\w)\s+used\s*=\s*([\d.]+)(\w)/);
-    if (m) {
-      const toMb = (v, u) => u === 'G' ? parseFloat(v) * 1024 : parseFloat(v);
-      swapTotalMb = toMb(m[1], m[2]);
-      swapUsedMb  = toMb(m[3], m[4]);
-    }
-  } catch {}
-
-  SWAP_HISTORY.push(swapUsedMb);
-  if (SWAP_HISTORY.length > SWAP_HISTORY_MAX) SWAP_HISTORY.shift();
-
-  let swapClimbing = false;
-  if (SWAP_HISTORY.length >= 4) {
-    const tail = SWAP_HISTORY.slice(-4);
-    swapClimbing = tail[1] > tail[0] + 50 && tail[2] > tail[1] + 50 && tail[3] > tail[2] + 50;
-  }
-
-  return {
-    ram: { totalMb, usedMb, availMb, wiredMb, compressedMb, pct: usedPct, pressure },
-    swap: { totalMb: swapTotalMb, usedMb: swapUsedMb, climbing: swapClimbing },
-  };
-}
-
-function getProcessList() {
-  try {
-    const out = execSync(
-      "ps -eo pid,ppid,rss,pcpu,comm,args -r 2>/dev/null | head -100",
-      { maxBuffer: 4 * 1024 * 1024 }
-    ).toString();
-    const lines = out.trim().split('\n').slice(1);
-    return lines.map(line => {
-      const parts = line.trim().split(/\s+/);
-      const pid  = parseInt(parts[0]);
-      const ppid = parseInt(parts[1]);
-      const rss  = parseInt(parts[2]);   // KB
-      const cpu  = parseFloat(parts[3]);
-      const comm = parts[4] || '';
-      const args = parts.slice(5).join(' ');
-      const memMb = rss / 1024;
-      const cl = comm.toLowerCase();
-      const ag = args.toLowerCase();
-
-      let type = 'other';
-      if (cl.includes('claude') || ag.includes('/claude') || ag.includes('claude-code') || ag.includes('claude --') || ag.includes('@anthropic')) type = 'claude';
-      else if ((cl === 'node' || cl === 'node.js') && (ag.includes('claude') || ag.includes('anthropic'))) type = 'claude';
-      else if (ag.includes('google chrome') || ag.includes('chrome helper') || cl.includes('chrome')) type = 'chrome';
-      else if (cl.includes('iterm')) type = 'iterm';
-      else if (cl === 'node' || cl === 'node.js') type = 'node';
-
-      // memory zone for per-process
-      let zone = 'green';
-      if (type === 'claude') {
-        if (memMb > 8192) zone = 'critical';
-        else if (memMb > 4096) zone = 'red';
-        else if (memMb > 1536) zone = 'yellow';
-      }
-
-      return { pid, ppid, rss, cpu, comm, args, memMb, type, zone };
-    }).filter(p => !isNaN(p.pid));
-  } catch { return []; }
-}
-
 const app = express();
 const PORT = 9876;
 const CONFIG_FILE = path.join(__dirname, 'apps.config.json');
@@ -142,17 +36,23 @@ function getState(id) {
   return state[id];
 }
 
-// --- TCP port check (tries IPv4 then IPv6) ---
+// --- HTTP health check (GET, accept any 1xx-4xx response as "up") ---
+const http = require('http');
+const https = require('https');
 function tcpCheck(url) {
-  const port = new URL(url).port || 80;
-  const tryHost = (host) => new Promise(resolve => {
-    const sock = new net.Socket();
-    sock.setTimeout(2000);
-    sock.connect(port, host, () => { sock.destroy(); resolve(true); });
-    sock.on('error', () => resolve(false));
-    sock.on('timeout', () => { sock.destroy(); resolve(false); });
+  return new Promise(resolve => {
+    try {
+      const parsed = new URL(url);
+      const mod = parsed.protocol === 'https:' ? https : http;
+      const req = mod.get(url, { timeout: 3000, headers: { 'User-Agent': 'apps-monitor' } }, res => {
+        res.destroy();
+        // 5xx = app crashed/broken → down; anything else = port is alive
+        resolve(res.statusCode < 500);
+      });
+      req.on('error', () => resolve(false));
+      req.on('timeout', () => { req.destroy(); resolve(false); });
+    } catch { resolve(false); }
   });
-  return tryHost('127.0.0.1').then(ok => ok ? true : tryHost('::1'));
 }
 
 // --- Process name check ---
@@ -232,10 +132,14 @@ app.get('/api/events', (req, res) => {
   res.on('close', () => sseClients.delete(res));
 });
 
-app.get('/api/system', (req, res) => {
-  const stats = getSystemStats();
-  const procs = getProcessList();
-  res.json({ stats, procs });
+app.get('/api/log/:id', (req, res) => {
+  const config = loadConfig();
+  const appCfg = config.find(a => a.id === req.params.id);
+  if (!appCfg || !appCfg.logPath) return res.json({ lines: [] });
+  try {
+    const out = execSync(`tail -30 "${appCfg.logPath}" 2>/dev/null || true`).toString();
+    res.json({ lines: out.trim().split('\n').filter(Boolean) });
+  } catch { res.json({ lines: [] }); }
 });
 
 app.post('/api/start/:id', (req, res) => {
@@ -250,17 +154,6 @@ app.post('/api/start/:id', (req, res) => {
     } else {
       return res.status(400).json({ error: 'no launchAgent configured' });
     }
-    res.json({ ok: true });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
-app.post('/api/kill/:pid', (req, res) => {
-  const pid = parseInt(req.params.pid);
-  if (!pid || pid < 2) return res.status(400).json({ error: 'invalid pid' });
-  try {
-    execSync(`kill -15 ${pid} 2>/dev/null || true`);
     res.json({ ok: true });
   } catch (e) {
     res.status(500).json({ error: e.message });

@@ -2,3 +2,5 @@ node_modules/
 apps.config.json
 *.log
 .DS_Store
+public/screenshots/
+scripts/screenshot-credentials.json
