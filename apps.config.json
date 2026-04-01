@@ -1,0 +1,92 @@
+[
+  {
+    "id": "bheng",
+    "name": "bheng",
+    "healthUrl": "http://localhost:3000",
+    "localUrl": "http://localhost:3000",
+    "repo": "https://github.com/bunlongheng/bheng",
+    "localPath": "/Users/bheng/Sites/bheng",
+    "logPath": "/tmp/bheng.log"
+  },
+  {
+    "id": "tools",
+    "name": "tools",
+    "healthUrl": "http://localhost:3001",
+    "localUrl": "http://localhost:3001",
+    "repo": "https://github.com/bunlongheng/tools",
+    "localPath": "/Users/bheng/Sites/tools",
+    "logPath": "/tmp/tools.log"
+  },
+  {
+    "id": "diagrams",
+    "name": "diagrams",
+    "healthUrl": "http://localhost:3002",
+    "localUrl": "http://localhost:3002",
+    "repo": "https://github.com/bunlongheng/diagrams",
+    "localPath": "/Users/bheng/Sites/diagrams",
+    "logPath": "/tmp/diagrams.log"
+  },
+  {
+    "id": "claude",
+    "name": "claude",
+    "healthUrl": "http://localhost:3003",
+    "localUrl": "http://localhost:3003",
+    "repo": "https://github.com/bunlongheng/claude",
+    "localPath": "/Users/bheng/Sites/claude",
+    "logPath": "/tmp/claude.log"
+  },
+  {
+    "id": "3pi",
+    "name": "3pi",
+    "healthUrl": "http://localhost:3333",
+    "localUrl": "http://localhost:3333",
+    "repo": "https://github.com/bunlongheng/3pi",
+    "localPath": "/Users/bheng/Sites/3pi",
+    "logPath": "/tmp/3pi.log"
+  },
+  {
+    "id": "3pi-poc",
+    "name": "3pi-poc",
+    "healthUrl": "http://localhost:3334",
+    "localUrl": "http://localhost:3334",
+    "repo": "https://github.com/bunlongheng/3pi-poc",
+    "localPath": "/Users/bheng/Sites/3pi-poc",
+    "logPath": "/tmp/3pi-poc.log"
+  },
+  {
+    "id": "stickies",
+    "name": "stickies",
+    "healthUrl": "http://localhost:4444",
+    "localUrl": "http://localhost:4444",
+    "repo": "https://github.com/bunlongheng/stickies",
+    "localPath": "/Users/bheng/Sites/stickies",
+    "logPath": "/tmp/stickies.log"
+  },
+  {
+    "id": "vault",
+    "name": "vault",
+    "healthUrl": "http://localhost:4445",
+    "localUrl": "http://localhost:4445",
+    "repo": "https://github.com/bunlongheng/vault",
+    "localPath": "/Users/bheng/Sites/vault",
+    "logPath": "/tmp/vault.log"
+  },
+  {
+    "id": "mindmaps",
+    "name": "mindmaps",
+    "healthUrl": "http://localhost:5173",
+    "localUrl": "http://localhost:5173",
+    "repo": "https://github.com/bunlongheng/mindmaps",
+    "localPath": "/Users/bheng/Sites/mindmaps",
+    "logPath": "/tmp/mindmaps.log"
+  },
+  {
+    "id": "safe",
+    "name": "safe",
+    "healthUrl": "http://localhost:6660",
+    "localUrl": "http://localhost:6660",
+    "repo": "https://github.com/bunlongheng/safe",
+    "localPath": "/Users/bheng/Sites/safe",
+    "logPath": "/tmp/safe.log"
+  }
+]

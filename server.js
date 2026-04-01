@@ -432,6 +432,101 @@ app.get('/api/retake/:appId', (req, res) => {
   } catch { res.json({}) }
 })
 
+// --- Machine Sync API ---
+// Each machine exposes its app list + identity. Machines can pull from each other.
+
+// Identity: who is this machine?
+app.get('/api/machine', (req, res) => {
+  res.json({
+    hostname: os.hostname(),
+    model: MACHINE_MODEL,
+    lanIp: LAN_IP,
+    port: PORT,
+    appCount: db.getApps().length,
+  });
+});
+
+// Export: portable app list (no machine-specific paths)
+app.get('/api/apps/export', (req, res) => {
+  const apps = db.getApps().map(a => ({
+    id: a.id,
+    name: a.name,
+    healthUrl: a.healthUrl,
+    localUrl: a.localUrl,
+    repo: a.repo,
+    startCommand: a.startCommand,
+    icon: a.icon,
+  }));
+  res.json({ hostname: os.hostname(), lanIp: LAN_IP, apps });
+});
+
+// Sync: pull app list from a remote machine and merge (ports, repos, icons)
+// POST /api/sync { "remote": "10.0.0.218:9876" }
+app.post('/api/sync', async (req, res) => {
+  const { remote } = req.body;
+  if (!remote) return res.status(400).json({ error: 'remote is required (ip:port or ip)' });
+
+  const remoteUrl = remote.includes(':') ? remote : `${remote}:${PORT}`;
+  const url = `http://${remoteUrl}/api/apps/export`;
+
+  try {
+    const remoteData = await new Promise((resolve, reject) => {
+      http.get(url, { timeout: 5000 }, (resp) => {
+        let data = '';
+        resp.on('data', c => data += c);
+        resp.on('end', () => {
+          try { resolve(JSON.parse(data)); } catch { reject(new Error('invalid JSON')); }
+        });
+      }).on('error', reject).on('timeout', function() { this.destroy(); reject(new Error('timeout')); });
+    });
+
+    const localApps = new Map(db.getApps().map(a => [a.id, a]));
+    const homedir = os.homedir();
+    let added = 0, updated = 0;
+
+    for (const app of remoteData.apps) {
+      const local = localApps.get(app.id);
+      if (!local) {
+        // New app — add it with local paths derived from convention
+        const localPath = path.join(homedir, 'Sites', app.id);
+        db.upsertApp({
+          id: app.id,
+          name: app.name,
+          healthUrl: app.healthUrl,
+          localUrl: app.localUrl,
+          repo: app.repo,
+          startCommand: app.startCommand || 'npm run dev',
+          icon: app.icon,
+          localPath: fs.existsSync(localPath) ? localPath : null,
+          logPath: `/tmp/${app.id}.log`,
+        });
+        added++;
+      } else {
+        // Existing app — sync port, repo, icon if different
+        const updates = {};
+        if (app.localUrl && app.localUrl !== local.localUrl) { updates.localUrl = app.localUrl; updates.healthUrl = app.healthUrl; }
+        if (app.repo && !local.repo) updates.repo = app.repo;
+        if (app.icon && !local.icon) updates.icon = app.icon;
+        if (Object.keys(updates).length) {
+          db.upsertApp({ id: app.id, ...updates });
+          updated++;
+        }
+      }
+    }
+
+    broadcast({ type: 'reload' });
+    res.json({
+      synced: true,
+      remote: { hostname: remoteData.hostname, ip: remoteData.lanIp },
+      added,
+      updated,
+      total: db.getApps().length,
+    });
+  } catch (err) {
+    res.status(502).json({ error: `Failed to reach ${url}: ${err.message}` });
+  }
+});
+
 // --- File watcher ---
 
 // --- Screenshots API ---
