@@ -83,8 +83,8 @@
   {
     "id": "safe",
     "name": "safe",
-    "healthUrl": "http://localhost:6660",
-    "localUrl": "http://localhost:6660",
+    "healthUrl": "http://localhost:6100",
+    "localUrl": "http://localhost:6100",
     "repo": "https://github.com/bunlongheng/safe",
     "localPath": "/Users/bheng/Sites/safe",
     "logPath": "/tmp/safe.log"

@@ -143,7 +143,8 @@
       <a href="/gallery.html" style="font-size:11px;color:var(--muted);text-decoration:none;border:1px solid var(--border);padding:4px 10px;border-radius:6px;transition:all 0.15s" onmouseover="this.style.color='var(--text)';this.style.borderColor='var(--text)'" onmouseout="this.style.color='var(--muted)';this.style.borderColor='var(--border)'">📸 Gallery</a>
     </div>
     <div style="display:flex;align-items:center;gap:10px">
-      <button class="help-btn" onclick="toggleHelp()" title="API Instructions">?</button>
+      <a href="/docs.html" class="help-btn" title="API Docs" style="text-decoration:none;font-size:11px">API</a>
+      <button class="help-btn" onclick="toggleHelp()" title="Quick Reference">?</button>
       <div style="position:relative">
       <button id="qrBtn" onclick="toggleQR()" title="Show LAN QR code" style="background:none;border:none;outline:none;cursor:pointer;padding:0;line-height:1;opacity:0.35;transition:opacity 0.15s;-webkit-tap-highlight-color:transparent;user-select:none" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity=document.getElementById('qrPopover').style.display!=='none'?'1':'0.35'">
         <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">

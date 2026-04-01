@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Local Apps — API Docs</title>
+<style>
+  :root { --bg:#0d0d0d; --surface:#161616; --border:#222; --text:#c9c9c9; --muted:#555; --accent:#a5b4fc; --get:#4ade80; --post:#facc15; --put:#60a5fa; --delete:#f87171; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  html { color-scheme:dark; }
+  ::-webkit-scrollbar { width:6px; } ::-webkit-scrollbar-track { background:transparent; } ::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.15); border-radius:3px; }
+  body { background:var(--bg); color:var(--text); font-family:'SF Mono','Fira Code',monospace; font-size:13px; line-height:1.6; }
+  .wrap { max-width:800px; margin:0 auto; padding:24px; }
+  header { padding:20px 0; border-bottom:1px solid var(--border); margin-bottom:28px; display:flex; align-items:center; justify-content:space-between; }
+  header h1 { font-size:18px; font-weight:700; color:#fff; }
+  header a { color:var(--muted); font-size:11px; text-decoration:none; border:1px solid var(--border); padding:4px 12px; border-radius:6px; }
+  header a:hover { color:var(--text); border-color:var(--text); }
+  h2 { font-size:11px; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); font-weight:600; margin:32px 0 12px; }
+  .endpoint { background:var(--surface); border:1px solid var(--border); border-radius:8px; margin-bottom:10px; overflow:hidden; }
+  .ep-header { display:flex; align-items:center; gap:10px; padding:12px 16px; cursor:pointer; transition:background 0.1s; }
+  .ep-header:hover { background:rgba(255,255,255,0.02); }
+  .method { font-size:10px; font-weight:700; padding:3px 8px; border-radius:4px; letter-spacing:0.05em; flex-shrink:0; min-width:52px; text-align:center; }
+  .method.GET { background:rgba(74,222,128,0.15); color:var(--get); }
+  .method.POST { background:rgba(250,204,21,0.15); color:var(--post); }
+  .method.PUT { background:rgba(96,165,250,0.15); color:var(--put); }
+  .method.DELETE { background:rgba(248,113,113,0.15); color:var(--delete); }
+  .ep-path { font-size:13px; color:#fff; font-weight:600; }
+  .ep-desc { color:var(--muted); font-size:11px; margin-left:auto; }
+  .ep-body { display:none; padding:0 16px 16px; border-top:1px solid var(--border); margin-top:0; }
+  .ep-body.open { display:block; }
+  .ep-body p { font-size:11px; color:var(--muted); margin:12px 0 8px; }
+  .ep-body .label { font-size:9px; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); font-weight:600; margin:14px 0 6px; }
+  pre { background:rgba(0,0,0,0.4); border:1px solid var(--border); border-radius:6px; padding:10px 14px; font-size:11px; color:var(--accent); overflow-x:auto; white-space:pre-wrap; word-break:break-all; position:relative; }
+  pre .copy { position:absolute; top:6px; right:8px; background:rgba(255,255,255,0.08); border:1px solid var(--border); color:var(--muted); font:inherit; font-size:10px; padding:2px 8px; border-radius:4px; cursor:pointer; }
+  pre .copy:hover { color:#fff; }
+  table.params { width:100%; border-collapse:collapse; font-size:11px; margin:6px 0; }
+  table.params th { text-align:left; color:var(--muted); font-size:9px; text-transform:uppercase; letter-spacing:0.06em; padding:4px 8px; border-bottom:1px solid var(--border); }
+  table.params td { padding:6px 8px; border-bottom:1px solid rgba(255,255,255,0.04); }
+  .required { color:var(--delete); font-size:9px; }
+  .optional { color:var(--muted); font-size:9px; }
+  .try-btn { background:rgba(165,180,252,0.12); border:1px solid rgba(165,180,252,0.3); color:var(--accent); font:inherit; font-size:10px; padding:4px 12px; border-radius:4px; cursor:pointer; margin-top:8px; }
+  .try-btn:hover { background:rgba(165,180,252,0.2); }
+  .try-result { margin-top:8px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>API Docs</h1>
+  <a href="/">← Dashboard</a>
+</header>
+
+<h2>Apps — CRUD</h2>
+
+<div class="endpoint">
+  <div class="ep-header" onclick="toggle(this)">
+    <span class="method GET">GET</span>
+    <span class="ep-path">/api/apps</span>
+    <span class="ep-desc">List all apps</span>
+  </div>
+  <div class="ep-body">
+    <p>Returns array of all registered apps.</p>
+    <div class="label">Try it</div>
+    <button class="try-btn" onclick="tryIt(this,'GET','/api/apps')">Send</button>
+    <div class="try-result"></div>
+  </div>
+</div>
+
+<div class="endpoint">
+  <div class="ep-header" onclick="toggle(this)">
+    <span class="method GET">GET</span>
+    <span class="ep-path">/api/apps/:id</span>
+    <span class="ep-desc">Get one app</span>
+  </div>
+  <div class="ep-body">
+    <p>Returns a single app by ID.</p>
+    <div class="label">Try it</div>
+    <button class="try-btn" onclick="tryIt(this,'GET',prompt('App ID:')?'/api/apps/'+prompt.lastValue:null)">Send</button>
+    <div class="try-result"></div>
+  </div>
+</div>
+
+<div class="endpoint">
+  <div class="ep-header" onclick="toggle(this)">
+    <span class="method POST">POST</span>
+    <span class="ep-path">/api/apps</span>
+    <span class="ep-desc">Register new app</span>
+  </div>
+  <div class="ep-body">
+    <p>Register a new app. Auto-creates: port assignment, Caddy proxy, LaunchAgent, health check.</p>
+    <div class="label">Body</div>
+    <table class="params">
+      <tr><th>Field</th><th>Type</th><th></th><th>Description</th></tr>
+      <tr><td>id</td><td>string</td><td><span class="required">required</span></td><td>Unique app identifier (kebab-case)</td></tr>
+      <tr><td>name</td><td>string</td><td><span class="optional">optional</span></td><td>Display name (defaults to id)</td></tr>
+      <tr><td>localPath</td><td>string</td><td><span class="optional">optional</span></td><td>Absolute path to project root</td></tr>
+      <tr><td>localUrl</td><td>string</td><td><span class="optional">optional</span></td><td>Auto-assigned if omitted</td></tr>
+      <tr><td>healthUrl</td><td>string</td><td><span class="optional">optional</span></td><td>Defaults to localUrl</td></tr>
+      <tr><td>repo</td><td>string</td><td><span class="optional">optional</span></td><td>GitHub repo URL</td></tr>
+      <tr><td>startCommand</td><td>string</td><td><span class="optional">optional</span></td><td>Defaults to "npm run dev"</td></tr>
+      <tr><td>icon</td><td>string</td><td><span class="optional">optional</span></td><td>URL/path to app icon</td></tr>
+      <tr><td>logPath</td><td>string</td><td><span class="optional">optional</span></td><td>Defaults to /tmp/{id}.log</td></tr>
+    </table>
+    <div class="label">Example</div>
+    <pre>curl -X POST http://localhost:9876/api/apps \
+  -H "Content-Type: application/json" \
+  -d '{"id":"my-app","localPath":"/Users/me/Sites/my-app"}'<span class="copy" onclick="copyPre(this)">Copy</span></pre>
+  </div>
+</div>
+
+<div class="endpoint">
+  <div class="ep-header" onclick="toggle(this)">
+    <span class="method PUT">PUT</span>
+    <span class="ep-path">/api/apps/:id</span>
+    <span class="ep-desc">Update app</span>
+  </div>
+  <div class="ep-body">
+    <p>Update any fields on an existing app. Only provided fields are changed.</p>
+    <div class="label">Example</div>
+    <pre>curl -X PUT http://localhost:9876/api/apps/my-app \
+  -H "Content-Type: application/json" \
+  -d '{"localUrl":"http://localhost:4000","icon":"/favicons/my-app.svg"}'<span class="copy" onclick="copyPre(this)">Copy</span></pre>
+  </div>
+</div>
+
+<div class="endpoint">
+  <div class="ep-header" onclick="toggle(this)">
+    <span class="method DELETE">DELETE</span>
+    <span class="ep-path">/api/apps/:id</span>
+    <span class="ep-desc">Remove app + teardown infra</span>
+  </div>
+  <div class="ep-body">
+    <p>Deletes app from DB, removes Caddy entry, and unloads LaunchAgent.</p>
+    <div class="label">Example</div>
+    <pre>curl -X DELETE http://localhost:9876/api/apps/my-app<span class="copy" onclick="copyPre(this)">Copy</span></pre>
+  </div>
+</div>
+
+<h2>Status & Monitoring</h2>
+
+<div class="endpoint">
+  <div class="ep-header" onclick="toggle(this)">
+    <span class="method GET">GET</span>
+    <span class="ep-path">/api/status</span>
+    <span class="ep-desc">Dashboard status (all apps + machine info)</span>
+  </div>
+  <div class="ep-body">
+    <p>Returns all apps with live status, LAN URLs, machine hostname, model, and IP.</p>
+    <button class="try-btn" onclick="tryIt(this,'GET','/api/status')">Send</button>
+    <div class="try-result"></div>
+  </div>
+</div>
+
+<div class="endpoint">
+  <div class="ep-header" onclick="toggle(this)">
+    <span class="method GET">GET</span>
+    <span class="ep-path">/api/events</span>
+    <span class="ep-desc">SSE stream (live updates)</span>
+  </div>
+  <div class="ep-body">
+    <p>Server-Sent Events stream. Events: <code>update</code> (status change), <code>reload</code> (config change), <code>screenshots_done</code>.</p>
+  </div>
+</div>
+
+<div class="endpoint">
+  <div class="ep-header" onclick="toggle(this)">
+    <span class="method GET">GET</span>
+    <span class="ep-path">/api/log/:id</span>
+    <span class="ep-desc">Last 30 lines of app log</span>
+  </div>
+  <div class="ep-body">
+    <p>Returns <code>{ lines: [...] }</code> from the app's log file.</p>
+    <button class="try-btn" onclick="tryIt(this,'GET','/api/log/bheng')">Try (bheng)</button>
+    <div class="try-result"></div>
+  </div>
+</div>
+
+<div class="endpoint">
+  <div class="ep-header" onclick="toggle(this)">
+    <span class="method POST">POST</span>
+    <span class="ep-path">/api/start/:id</span>
+    <span class="ep-desc">Start app via LaunchAgent</span>
+  </div>
+  <div class="ep-body">
+    <p>Loads and starts the app's LaunchAgent plist.</p>
+  </div>
+</div>
+
+<h2>Machine Sync</h2>
+
+<div class="endpoint">
+  <div class="ep-header" onclick="toggle(this)">
+    <span class="method GET">GET</span>
+    <span class="ep-path">/api/machine</span>
+    <span class="ep-desc">Machine identity</span>
+  </div>
+  <div class="ep-body">
+    <p>Returns hostname, model, LAN IP, port, and app count.</p>
+    <button class="try-btn" onclick="tryIt(this,'GET','/api/machine')">Send</button>
+    <div class="try-result"></div>
+  </div>
+</div>
+
+<div class="endpoint">
+  <div class="ep-header" onclick="toggle(this)">
+    <span class="method GET">GET</span>
+    <span class="ep-path">/api/apps/export</span>
+    <span class="ep-desc">Portable app list for syncing</span>
+  </div>
+  <div class="ep-body">
+    <p>Returns app list without machine-specific paths. Used by <code>/api/sync</code>.</p>
+    <button class="try-btn" onclick="tryIt(this,'GET','/api/apps/export')">Send</button>
+    <div class="try-result"></div>
+  </div>
+</div>
+
+<div class="endpoint">
+  <div class="ep-header" onclick="toggle(this)">
+    <span class="method POST">POST</span>
+    <span class="ep-path">/api/sync</span>
+    <span class="ep-desc">Pull apps from another machine</span>
+  </div>
+  <div class="ep-body">
+    <p>Connects to a remote Local Apps instance and merges its app list. Adds missing apps, syncs ports/repos/icons.</p>
+    <div class="label">Body</div>
+    <table class="params">
+      <tr><th>Field</th><th>Type</th><th></th><th>Description</th></tr>
+      <tr><td>remote</td><td>string</td><td><span class="required">required</span></td><td>IP or IP:port of remote machine (e.g. "10.0.0.218")</td></tr>
+    </table>
+    <div class="label">Example</div>
+    <pre>curl -X POST http://localhost:9876/api/sync \
+  -H "Content-Type: application/json" \
+  -d '{"remote":"10.0.0.218"}'<span class="copy" onclick="copyPre(this)">Copy</span></pre>
+  </div>
+</div>
+
+<h2>Screenshots</h2>
+
+<div class="endpoint">
+  <div class="ep-header" onclick="toggle(this)">
+    <span class="method GET">GET</span>
+    <span class="ep-path">/api/screenshots/:id</span>
+    <span class="ep-desc">Get screenshots for an app</span>
+  </div>
+  <div class="ep-body">
+    <p>Returns screenshot list and capture timestamp.</p>
+    <button class="try-btn" onclick="tryIt(this,'GET','/api/screenshots/bheng')">Try (bheng)</button>
+    <div class="try-result"></div>
+  </div>
+</div>
+
+<div class="endpoint">
+  <div class="ep-header" onclick="toggle(this)">
+    <span class="method POST">POST</span>
+    <span class="ep-path">/api/screenshots/:id</span>
+    <span class="ep-desc">Capture screenshots for an app</span>
+  </div>
+  <div class="ep-body">
+    <p>Triggers the screenshot bot for the specified app. Runs in background.</p>
+    <div class="label">Example</div>
+    <pre>curl -X POST http://localhost:9876/api/screenshots/bheng<span class="copy" onclick="copyPre(this)">Copy</span></pre>
+  </div>
+</div>
+
+<div class="endpoint">
+  <div class="ep-header" onclick="toggle(this)">
+    <span class="method GET">GET</span>
+    <span class="ep-path">/api/screenshots-status</span>
+    <span class="ep-desc">Running screenshot jobs</span>
+  </div>
+  <div class="ep-body">
+    <p>Returns currently running screenshot capture jobs.</p>
+    <button class="try-btn" onclick="tryIt(this,'GET','/api/screenshots-status')">Send</button>
+    <div class="try-result"></div>
+  </div>
+</div>
+
+<div class="endpoint">
+  <div class="ep-header" onclick="toggle(this)">
+    <span class="method DELETE">DELETE</span>
+    <span class="ep-path">/api/screenshot</span>
+    <span class="ep-desc">Delete a screenshot</span>
+  </div>
+  <div class="ep-body">
+    <div class="label">Body</div>
+    <table class="params">
+      <tr><th>Field</th><th>Type</th><th></th><th>Description</th></tr>
+      <tr><td>appId</td><td>string</td><td><span class="required">required</span></td><td>App ID</td></tr>
+      <tr><td>mode</td><td>string</td><td><span class="required">required</span></td><td>"desktop" or "mobile"</td></tr>
+      <tr><td>filename</td><td>string</td><td><span class="required">required</span></td><td>Screenshot filename</td></tr>
+    </table>
+  </div>
+</div>
+
+<h2>Other</h2>
+
+<div class="endpoint">
+  <div class="ep-header" onclick="toggle(this)">
+    <span class="method GET">GET</span>
+    <span class="ep-path">/api/qr</span>
+    <span class="ep-desc">QR code for LAN access</span>
+  </div>
+  <div class="ep-body">
+    <p>Returns <code>{ url, dataUrl }</code> — a QR code image (base64) pointing to the LAN dashboard URL.</p>
+    <button class="try-btn" onclick="tryIt(this,'GET','/api/qr')">Send</button>
+    <div class="try-result"></div>
+  </div>
+</div>
+
+</div>
+
+<script>
+function toggle(header) {
+  header.nextElementSibling.classList.toggle('open');
+}
+function copyPre(btn) {
+  const pre = btn.parentElement;
+  const text = pre.textContent.replace('Copy','').trim();
+  navigator.clipboard.writeText(text).then(() => { btn.textContent='Copied!'; setTimeout(()=>btn.textContent='Copy',1500); });
+}
+async function tryIt(btn, method, url) {
+  if (!url) return;
+  const result = btn.parentElement.querySelector('.try-result');
+  result.innerHTML = '<pre style="color:var(--muted)">Loading...</pre>';
+  try {
+    const res = await fetch(url, { method });
+    const data = await res.json();
+    result.innerHTML = `<pre>${JSON.stringify(data, null, 2).slice(0, 3000)}<span class="copy" onclick="copyPre(this)">Copy</span></pre>`;
+  } catch (e) {
+    result.innerHTML = `<pre style="color:var(--delete)">${e.message}</pre>`;
+  }
+}
+</script>
+</body>
+</html>
