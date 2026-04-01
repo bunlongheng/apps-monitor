@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Apps Monitor</title>
+<title>Local Apps</title>
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
 <link rel="icon" type="image/png" sizes="32x32" href="/icon-32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/icon-16.png">
@@ -115,7 +115,8 @@
 <header>
   <div class="wrap" style="display:flex;align-items:center;justify-content:space-between;gap:16px">
     <div>
-      <h1>Apps Monitor</h1>
+      <h1>Local Apps</h1>
+      <div id="machineInfo" style="color:var(--muted);font-size:11px;margin-top:2px"></div>
     </div>
     <div style="display:flex;align-items:center;gap:10px">
       <button class="help-btn" onclick="toggleHelp()" title="API Instructions">?</button>
@@ -173,7 +174,7 @@
 
     <div class="help-section">
       <div class="help-label">AI Instruction (copy this to any AI)</div>
-      <div class="help-code" id="helpAI">Register this app with my local apps-monitor by making a POST request:
+      <div class="help-code" id="helpAI">Register this app with my local-apps monitor by making a POST request:
 
 POST http://localhost:9876/api/apps
 Content-Type: application/json
@@ -255,6 +256,8 @@ async function load() {
     const res = await fetch('/api/status');
     const data = await res.json();
     apps = data.apps;
+    const hostname = data.apps[0]?.hostname || '—';
+    document.getElementById('machineInfo').textContent = `${hostname} · ${data.lanIp}`;
     renderTable();
   } catch {
     const tbody = document.getElementById('appTable');
@@ -284,7 +287,7 @@ function renderTable() {
       <td>
         <div style="display:flex;align-items:center;gap:12px">
           <span class="dot ${app.status}"></span>
-          ${faviconImg(app.id)}
+          ${appIcon(app)}
           <a class="app-name" href="${app.lanUrl || app.localUrl || '#'}" target="_blank" onclick="event.stopPropagation()">${app.name}</a>
         </div>
       </td>
@@ -294,6 +297,7 @@ function renderTable() {
   }).join('');
 }
 
+// Icon priority: app.icon (DB) → FAVICONS map → letter avatar
 const FAVICONS = {
   'bheng':       '/favicons/bheng.png',
   'diagrams':    '/favicons/diagrams.svg',
@@ -309,10 +313,38 @@ const FAVICONS = {
   'tools':       '/favicons/tools.svg',
 };
 
+const AVATAR_COLORS = [
+  ['#3b82f6','#fff'],['#8b5cf6','#fff'],['#ec4899','#fff'],['#f59e0b','#000'],
+  ['#10b981','#fff'],['#ef4444','#fff'],['#06b6d4','#fff'],['#f97316','#fff'],
+];
+function avatarColor(id) {
+  let h = 0; for (const c of id) h = ((h << 5) - h + c.charCodeAt(0)) | 0;
+  return AVATAR_COLORS[Math.abs(h) % AVATAR_COLORS.length];
+}
+function letterAvatar(id, name) {
+  const letter = (name || id).charAt(0).toUpperCase();
+  const [bg, fg] = avatarColor(id);
+  return `<span style="width:24px;height:24px;border-radius:6px;background:${bg};color:${fg};display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;letter-spacing:0">${letter}</span>`;
+}
+
+function iconImg(src, id, name) {
+  const av = letterAvatar(id, name).replace(/'/g, "\\'").replace(/"/g, '&quot;');
+  return `<img src="${escHtml(src)}" width="24" height="24" style="border-radius:6px;object-fit:contain;flex-shrink:0" onerror="this.outerHTML='${av}'">`;
+}
+
+function appIcon(app) {
+  if (app.icon) return iconImg(app.icon, app.id, app.name);
+  const src = FAVICONS[app.id];
+  if (src) return iconImg(src, app.id, app.name);
+  return letterAvatar(app.id, app.name);
+}
+
 function faviconImg(id) {
+  const app = apps.find(a => a.id === id);
+  if (app) return appIcon(app);
   const src = FAVICONS[id];
-  if (!src) return '';
-  return `<img src="${src}" width="24" height="24" style="border-radius:5px;object-fit:contain;flex-shrink:0" onerror="this.style.display='none'">`;
+  if (src) return iconImg(src, id, id);
+  return letterAvatar(id, id);
 }
 
 const startingApps = new Set();

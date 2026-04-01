@@ -1,4 +1,4 @@
-# Apps Monitor
+# Local Apps
 
 A lightweight local process supervisor and health dashboard for macOS. Monitors your apps via TCP port checks or process name, with real-time SSE updates, browser notifications, and a click-through modal for each app.
 
@@ -47,7 +47,7 @@ Each entry in `apps.config.json`:
 <key>ProgramArguments</key>
 <array>
   <string>/usr/local/bin/node</string>
-  <string>/Users/username/apps-monitor/server.js</string>
+  <string>/Users/username/local-apps/server.js</string>
 </array>
 ```
 

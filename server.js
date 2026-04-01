@@ -202,7 +202,7 @@ function tcpCheck(url) {
     try {
       const parsed = new URL(url);
       const mod = parsed.protocol === 'https:' ? https : http;
-      const req = mod.get(url, { timeout: 3000, headers: { 'User-Agent': 'apps-monitor' } }, res => {
+      const req = mod.get(url, { timeout: 3000, headers: { 'User-Agent': 'local-apps' } }, res => {
         res.destroy();
         resolve(res.statusCode < 500);
       });
@@ -264,6 +264,7 @@ app.get('/api/status', (req, res) => {
       caddyUrl: a.caddyUrl || null,
       launchAgent: a.launchAgent || null,
       launchAgentPath: a.launchAgentPath || null,
+      icon: a.icon || null,
       repo: a.repo || null,
       localPath: a.localPath || null,
       logPath: a.logPath || null,
@@ -379,7 +380,7 @@ checkAll();
 setInterval(checkAll, CHECK_INTERVAL);
 
 app.listen(PORT, () => {
-  console.log(`\n  Apps Monitor running at:`);
+  console.log(`\n  Local Apps running at:`);
   console.log(`  Local:  http://localhost:${PORT}`);
   console.log(`  LAN:    http://${LAN_IP}:${PORT}\n`);
 });

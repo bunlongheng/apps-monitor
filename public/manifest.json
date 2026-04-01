@@ -1,6 +1,6 @@
 {
-  "name": "Apps Monitor",
-  "short_name": "Monitor",
+  "name": "Local Apps",
+  "short_name": "Local Apps",
   "description": "Process supervisor & health dashboard",
   "start_url": "/",
   "display": "standalone",

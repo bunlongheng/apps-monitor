@@ -2,7 +2,7 @@ const Database = require('better-sqlite3');
 const path = require('path');
 const fs = require('fs');
 
-const DB_PATH = path.join(__dirname, 'apps-monitor.db');
+const DB_PATH = path.join(__dirname, 'local-apps.db');
 const CONFIG_FILE = path.join(__dirname, 'apps.config.json');
 
 const db = new Database(DB_PATH);
@@ -33,14 +33,15 @@ db.exec(`
 
 // Migration: add start_command if missing (existing DBs)
 try { db.exec(`ALTER TABLE apps ADD COLUMN start_command TEXT DEFAULT 'npm run dev'`); } catch { /* already exists */ }
+try { db.exec(`ALTER TABLE apps ADD COLUMN icon TEXT`); } catch { /* already exists */ }
 
 // --- Seed from JSON if DB is empty ---
 const count = db.prepare('SELECT COUNT(*) as n FROM apps').get().n;
 if (count === 0 && fs.existsSync(CONFIG_FILE)) {
   const apps = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
   const insert = db.prepare(`
-    INSERT OR IGNORE INTO apps (id, name, health_url, local_url, process_check, caddy_url, prod_url, local_path, log_path, repo, launch_agent, launch_agent_path, start_command, no_screenshot)
-    VALUES (@id, @name, @healthUrl, @localUrl, @processCheck, @caddyUrl, @prodUrl, @localPath, @logPath, @repo, @launchAgent, @launchAgentPath, @startCommand, @noScreenshot)
+    INSERT OR IGNORE INTO apps (id, name, health_url, local_url, process_check, caddy_url, prod_url, local_path, log_path, repo, launch_agent, launch_agent_path, start_command, icon, no_screenshot)
+    VALUES (@id, @name, @healthUrl, @localUrl, @processCheck, @caddyUrl, @prodUrl, @localPath, @logPath, @repo, @launchAgent, @launchAgentPath, @startCommand, @icon, @noScreenshot)
   `);
   const tx = db.transaction((rows) => {
     for (const a of rows) {
@@ -58,6 +59,7 @@ if (count === 0 && fs.existsSync(CONFIG_FILE)) {
         launchAgent: a.launchAgent || null,
         launchAgentPath: a.launchAgentPath || null,
         startCommand: a.startCommand || 'npm run dev',
+        icon: a.icon || null,
         noScreenshot: a.noScreenshot ? 1 : 0,
       });
     }
@@ -83,6 +85,7 @@ function rowToApp(row) {
     launchAgent: row.launch_agent,
     launchAgentPath: row.launch_agent_path,
     startCommand: row.start_command,
+    icon: row.icon,
     noScreenshot: !!row.no_screenshot,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -107,7 +110,7 @@ function upsertApp(data) {
       processCheck: 'process_check', caddyUrl: 'caddy_url', prodUrl: 'prod_url',
       localPath: 'local_path', logPath: 'log_path', repo: 'repo',
       launchAgent: 'launch_agent', launchAgentPath: 'launch_agent_path',
-      startCommand: 'start_command', noScreenshot: 'no_screenshot',
+      startCommand: 'start_command', icon: 'icon', noScreenshot: 'no_screenshot',
     };
     for (const [camel, col] of Object.entries(map)) {
       if (camel in data) {
@@ -120,8 +123,8 @@ function upsertApp(data) {
     db.prepare(`UPDATE apps SET ${fields.join(', ')} WHERE id = @id`).run(params);
   } else {
     db.prepare(`
-      INSERT INTO apps (id, name, health_url, local_url, process_check, caddy_url, prod_url, local_path, log_path, repo, launch_agent, launch_agent_path, start_command, no_screenshot)
-      VALUES (@id, @name, @healthUrl, @localUrl, @processCheck, @caddyUrl, @prodUrl, @localPath, @logPath, @repo, @launchAgent, @launchAgentPath, @startCommand, @noScreenshot)
+      INSERT INTO apps (id, name, health_url, local_url, process_check, caddy_url, prod_url, local_path, log_path, repo, launch_agent, launch_agent_path, start_command, icon, no_screenshot)
+      VALUES (@id, @name, @healthUrl, @localUrl, @processCheck, @caddyUrl, @prodUrl, @localPath, @logPath, @repo, @launchAgent, @launchAgentPath, @startCommand, @icon, @noScreenshot)
     `).run({
       id: data.id,
       name: data.name || data.id,
@@ -136,6 +139,7 @@ function upsertApp(data) {
       launchAgent: data.launchAgent || null,
       launchAgentPath: data.launchAgentPath || null,
       startCommand: data.startCommand || 'npm run dev',
+      icon: data.icon || null,
       noScreenshot: data.noScreenshot ? 1 : 0,
     });
   }
