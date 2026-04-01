@@ -2,7 +2,7 @@ const express = require('express');
 const os = require('os');
 const path = require('path');
 const fs = require('fs');
-const { execSync } = require('child_process');
+const { execSync, spawn } = require('child_process');
 const QRCode = require('qrcode');
 const db = require('./db');
 
@@ -187,6 +187,15 @@ function getLanIp() {
 }
 const LAN_IP = getLanIp();
 
+// --- Machine model detection ---
+const MACHINE_MODEL = (() => {
+  try {
+    const name = execSync('system_profiler SPHardwareDataType 2>/dev/null').toString();
+    const match = name.match(/Model Name:\s*(.+)/);
+    return match ? match[1].trim() : null;
+  } catch { return null; }
+})();
+
 // --- State ---
 const state = {};
 function getState(id) {
@@ -280,7 +289,7 @@ app.get('/api/status', (req, res) => {
       hasScreenshots,
     };
   });
-  res.json({ apps, lanIp: LAN_IP, monitorUrl: `http://${LAN_IP}:${PORT}` });
+  res.json({ apps, lanIp: LAN_IP, machineModel: MACHINE_MODEL, monitorUrl: `http://${LAN_IP}:${PORT}` });
 });
 
 // --- CRUD: Apps ---
@@ -424,6 +433,62 @@ app.get('/api/retake/:appId', (req, res) => {
 })
 
 // --- File watcher ---
+
+// --- Screenshots API ---
+const SCREENSHOTS_DIR = path.join(__dirname, 'public', 'screenshots');
+
+app.get('/api/screenshots', (req, res) => {
+  const indexFile = path.join(SCREENSHOTS_DIR, 'index.json');
+  if (!fs.existsSync(indexFile)) return res.json([]);
+  res.json(JSON.parse(fs.readFileSync(indexFile, 'utf8')));
+});
+
+app.get('/api/screenshots/:id', (req, res) => {
+  const dir = path.join(SCREENSHOTS_DIR, req.params.id);
+  const indexFile = path.join(dir, 'index.json');
+  if (fs.existsSync(indexFile)) {
+    return res.json(JSON.parse(fs.readFileSync(indexFile, 'utf8')));
+  }
+  if (!fs.existsSync(dir)) return res.json({ id: req.params.id, screenshots: [] });
+  const files = fs.readdirSync(dir).filter(f => f.endsWith('.png')).sort();
+  res.json({ id: req.params.id, screenshots: files });
+});
+
+// Track running screenshot jobs
+const screenshotJobs = new Map();
+
+app.post('/api/screenshots/:id', (req, res) => {
+  const id = req.params.id;
+  const appCfg = db.getApp(id);
+  if (!appCfg) return res.status(404).json({ error: 'not found' });
+  if (screenshotJobs.has(id)) return res.json({ status: 'already_running' });
+
+  const proc = spawn('node', [path.join(__dirname, 'scripts', 'screenshot-bot.js'), id], {
+    cwd: __dirname,
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+
+  let output = '';
+  proc.stdout.on('data', d => output += d.toString());
+  proc.stderr.on('data', d => output += d.toString());
+
+  screenshotJobs.set(id, { proc, startedAt: new Date().toISOString() });
+
+  proc.on('close', (code) => {
+    screenshotJobs.delete(id);
+    broadcast({ type: 'screenshots_done', id, code });
+  });
+
+  res.json({ status: 'started' });
+});
+
+app.get('/api/screenshots-status', (req, res) => {
+  const jobs = {};
+  for (const [id, job] of screenshotJobs) jobs[id] = { startedAt: job.startedAt };
+  res.json(jobs);
+});
+
+// --- File watcher (public dir only) ---
 let reloadTimer = null;
 fs.watch(path.join(__dirname, 'public'), { recursive: true }, () => {
   clearTimeout(reloadTimer);

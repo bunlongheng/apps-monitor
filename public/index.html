@@ -26,6 +26,11 @@
     --accent: #c9c9c9;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { color-scheme: dark; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
   body { background: var(--bg); color: var(--text); font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px; }
 
   .wrap { max-width: 900px; margin: 0 auto; padding: 0 24px; }
@@ -72,7 +77,7 @@
   /* Modal */
   .modal-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); backdrop-filter:blur(4px); z-index:200; align-items:center; justify-content:center; }
   .modal-backdrop.open { display:flex; }
-  .modal { background:var(--surface); border:1px solid var(--border); border-radius:12px; width:580px; max-width:94vw; padding:24px; position:relative; }
+  .modal { background:var(--surface); border:1px solid var(--border); border-radius:12px; width:680px; max-width:94vw; max-height:85vh; overflow-y:auto; padding:24px; position:relative; }
   .modal-header { display:flex; align-items:center; gap:10px; margin-bottom:20px; }
   .modal-title { font-size:16px; font-weight:700; }
   .modal-close { position:absolute; top:16px; right:16px; background:none; border:none; color:var(--muted); cursor:pointer; font-size:18px; line-height:1; }
@@ -98,6 +103,21 @@
   .start-btn:disabled { opacity:0.5; cursor:default; }
   .log-block { margin-top:8px; background:rgba(0,0,0,0.3); border:1px solid var(--border); border-radius:6px; padding:8px 10px; font-size:10px; font-family:'SF Mono','Fira Code',monospace; color:var(--muted); max-height:160px; overflow-y:auto; white-space:pre-wrap; word-break:break-all; }
 
+  /* Screenshots */
+  .shots-header { display:flex; align-items:center; justify-content:space-between; margin-top:16px; padding-top:14px; border-top:1px solid var(--border); }
+  .shots-label { font-size:10px; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); font-weight:600; }
+  .shots-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:8px; margin-top:10px; }
+  .shot-thumb { border-radius:6px; border:1px solid var(--border); cursor:pointer; transition:all 0.15s; width:100%; aspect-ratio:16/9; object-fit:cover; background:#000; }
+  .shot-thumb:hover { border-color:rgba(255,255,255,0.3); transform:scale(1.02); }
+  .shot-name { font-size:9px; color:var(--muted); margin-top:3px; text-align:center; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .capture-btn { background:none; border:1px solid rgba(139,92,246,0.4); color:rgba(139,92,246,0.9); font-family:inherit; font-size:10px; padding:3px 10px; border-radius:4px; cursor:pointer; transition:all 0.15s; }
+  .capture-btn:hover { background:rgba(139,92,246,0.15); border-color:#8b5cf6; color:#8b5cf6; }
+  .capture-btn:disabled { opacity:0.5; cursor:default; }
+  /* Lightbox */
+  .lightbox { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); z-index:300; align-items:center; justify-content:center; cursor:zoom-out; }
+  .lightbox.open { display:flex; }
+  .lightbox img { max-width:92vw; max-height:92vh; border-radius:8px; box-shadow:0 0 40px rgba(0,0,0,0.5); }
+
   /* Help modal */
   .help-btn { background:none; border:1px solid var(--border); color:var(--muted); width:28px; height:28px; border-radius:50%; cursor:pointer; font-size:13px; font-weight:700; font-family:inherit; display:flex; align-items:center; justify-content:center; transition:all 0.15s; }
   .help-btn:hover { border-color:var(--text); color:var(--text); }
@@ -114,10 +134,11 @@
 
 <header>
   <div class="wrap" style="display:flex;align-items:center;justify-content:space-between;gap:16px">
-    <div style="display:flex;align-items:center;gap:16px">
+    <div style="display:flex;align-items:center;gap:12px">
+      <img id="deviceIcon" src="" width="28" height="28" style="display:none;opacity:0.85">
       <div>
-        <h1>Local Apps</h1>
-        <div id="machineInfo" style="color:var(--muted);font-size:11px;margin-top:2px"></div>
+        <h1 id="machineTitle" style="color:#fff">Local Apps</h1>
+        <div id="machineInfo" style="color:rgba(255,255,255,0.55);font-size:11px;margin-top:2px"></div>
       </div>
       <a href="/gallery.html" style="font-size:11px;color:var(--muted);text-decoration:none;border:1px solid var(--border);padding:4px 10px;border-radius:6px;transition:all 0.15s" onmouseover="this.style.color='var(--text)';this.style.borderColor='var(--text)'" onmouseout="this.style.color='var(--muted)';this.style.borderColor='var(--border)'">📸 Gallery</a>
     </div>
@@ -151,7 +172,10 @@
 <div class="modal-backdrop" id="helpBackdrop" onclick="if(event.target===this)toggleHelp()">
   <div class="help-modal">
     <button class="modal-close" onclick="toggleHelp()">✕</button>
-    <h2 style="font-size:15px;font-weight:700;margin-bottom:4px">API — Register an App</h2>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <h2 style="font-size:15px;font-weight:700">API — Register an App</h2>
+      <button onclick="copyAllPanels(this)" style="background:rgba(255,255,255,0.08);border:1px solid var(--border);color:var(--text);font-family:inherit;font-size:11px;padding:5px 14px;border-radius:6px;cursor:pointer;transition:all 0.15s;font-weight:600">Copy All</button>
+    </div>
     <p style="font-size:11px;color:var(--muted);margin-bottom:20px">Copy and give to AI or run in terminal. One POST auto-creates: port, Caddy proxy, LaunchAgent, health check, and log path.</p>
 
     <div class="help-section">
@@ -247,7 +271,12 @@ DELETE /api/apps/:id &nbsp;&nbsp;&nbsp;— remove app + teardown infra
       <span class="modal-title" id="modalTitle"></span>
     </div>
     <div class="modal-rows" id="modalRows"></div>
+    <div id="modalScreenshots"></div>
   </div>
+</div>
+
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <img id="lightboxImg" src="">
 </div>
 
 <script>
@@ -260,7 +289,18 @@ async function load() {
     const data = await res.json();
     apps = data.apps;
     const hostname = data.apps[0]?.hostname || '—';
-    document.getElementById('machineInfo').textContent = `${hostname} · ${data.lanIp}`;
+    const model = data.machineModel || '';
+    // Hostname as title, IP below
+    document.getElementById('machineTitle').textContent = hostname.replace('.local', '');
+    document.getElementById('machineInfo').textContent = data.lanIp;
+    // Device icon
+    const deviceMap = { 'mac mini': 'mac-mini', 'macbook pro': 'macbook-pro', 'macbook air': 'macbook-air' };
+    const deviceKey = Object.keys(deviceMap).find(k => model.toLowerCase().includes(k));
+    if (deviceKey) {
+      const icon = document.getElementById('deviceIcon');
+      icon.src = `/devices/${deviceMap[deviceKey]}.svg`;
+      icon.style.display = 'block';
+    }
     renderTable();
   } catch {
     const tbody = document.getElementById('appTable');
@@ -385,6 +425,7 @@ function connectSSE() {
       if (app) { app.status = msg.status; renderTable(); }
     }
     if (msg.type === 'reload') { location.reload(); }
+    if (msg.type === 'screenshots_done') { loadScreenshots(msg.id); }
   };
   es.onerror = () => { es.close(); setTimeout(connectSSE, 3000); };
 }
@@ -461,7 +502,71 @@ function openModal(app) {
     }).catch(() => { logDiv.textContent = '(could not read log)'; });
   }
 
+  // Load screenshots
+  loadScreenshots(app.id);
+
   document.getElementById('modalBackdrop').classList.add('open');
+}
+
+async function loadScreenshots(id) {
+  const container = document.getElementById('modalScreenshots');
+  container.innerHTML = '';
+  try {
+    const data = await fetch('/api/screenshots/' + id).then(r => r.json());
+    const shots = data.screenshots || [];
+    const capturedAt = data.capturedAt ? new Date(data.capturedAt).toLocaleString() : null;
+
+    const header = document.createElement('div');
+    header.className = 'shots-header';
+    header.innerHTML = `
+      <span class="shots-label">Screenshots${shots.length ? ` (${shots.length})` : ''}${capturedAt ? ` · ${capturedAt}` : ''}</span>
+      <button class="capture-btn" onclick="captureScreenshots('${id}',this)">Capture</button>
+    `;
+    container.appendChild(header);
+
+    if (shots.length) {
+      const grid = document.createElement('div');
+      grid.className = 'shots-grid';
+      for (const file of shots) {
+        const src = '/screenshots/' + id + '/' + file;
+        const label = file.replace('.png','').replace(/^\d+-/, '').replace(/-/g, ' ');
+        grid.innerHTML += `
+          <div>
+            <img class="shot-thumb" src="${src}" onclick="openLightbox('${src}')" loading="lazy" alt="${label}">
+            <div class="shot-name">${label}</div>
+          </div>`;
+      }
+      container.appendChild(grid);
+    } else {
+      const empty = document.createElement('div');
+      empty.style.cssText = 'color:var(--muted);font-size:11px;margin-top:10px;text-align:center;padding:20px 0';
+      empty.textContent = 'No screenshots yet — click Capture to generate';
+      container.appendChild(empty);
+    }
+  } catch {
+    container.innerHTML = '';
+  }
+}
+
+async function captureScreenshots(id, btn) {
+  btn.textContent = 'Capturing…';
+  btn.disabled = true;
+  try {
+    await fetch('/api/screenshots/' + id, { method: 'POST' });
+    btn.textContent = 'Running…';
+  } catch {
+    btn.textContent = 'Error';
+    btn.disabled = false;
+  }
+}
+
+function openLightbox(src) {
+  event.stopPropagation();
+  document.getElementById('lightboxImg').src = src;
+  document.getElementById('lightbox').classList.add('open');
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
 }
 
 function closeModal(e) {
@@ -470,7 +575,10 @@ function closeModal(e) {
 }
 
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') document.getElementById('modalBackdrop').classList.remove('open');
+  if (e.key === 'Escape') {
+    if (document.getElementById('lightbox').classList.contains('open')) { closeLightbox(); return; }
+    document.getElementById('modalBackdrop').classList.remove('open');
+  }
 });
 
 // --- QR ---
@@ -514,6 +622,16 @@ function copyBlock(id, btn) {
   } else {
     fallbackCopy(text, () => { btn.textContent = 'Copied!'; setTimeout(() => btn.textContent = orig, 1500); });
   }
+}
+function copyAllPanels(btn) {
+  const ids = ['helpMin', 'helpFull', 'helpAI'];
+  const text = ids.map(id => {
+    const el = document.getElementById(id);
+    return el ? el.textContent.replace(/Copy$/, '').trim() : '';
+  }).filter(Boolean).join('\n\n---\n\n');
+  const orig = btn.textContent;
+  const done = () => { btn.textContent = 'Copied!'; setTimeout(() => btn.textContent = orig, 1500); };
+  if (navigator.clipboard) { navigator.clipboard.writeText(text).then(done); } else { fallbackCopy(text, done); }
 }
 
 load();
