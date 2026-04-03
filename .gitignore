@@ -2,8 +2,8 @@ node_modules/
 apps.config.json
 local-apps.db
 local.db
-local.db-wal
-local.db-shm
+*.db-shm
+*.db-wal
 *.log
 .DS_Store
 public/screenshots/
