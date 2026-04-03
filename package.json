@@ -7,13 +7,16 @@
     "start": "node server.js",
     "dev": "node --watch server.js",
     "screenshots": "node scripts/screenshot-bot.js",
-    "screenshots:app": "node scripts/screenshot-bot.js"
+    "screenshots:app": "node scripts/screenshot-bot.js",
+    "icons": "node scripts/generate-favicons.js",
+    "icons:app": "node scripts/generate-favicons.js"
   },
   "dependencies": {
     "better-sqlite3": "^12.8.0",
     "express": "^4.18.2",
     "qrcode": "^1.5.4",
-    "sharp": "^0.34.5"
+    "sharp": "^0.34.5",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "@resvg/resvg-js": "^2.6.2",

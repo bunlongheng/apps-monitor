@@ -2,7 +2,7 @@ const Database = require('better-sqlite3');
 const path = require('path');
 const fs = require('fs');
 
-const DB_PATH = path.join(__dirname, 'local-apps.db');
+const DB_PATH = path.join(__dirname, 'local.db');
 const CONFIG_FILE = path.join(__dirname, 'apps.config.json');
 
 const db = new Database(DB_PATH);
@@ -44,6 +44,19 @@ db.exec(`
     port INTEGER DEFAULT 9876,
     model TEXT,
     last_seen TEXT DEFAULT CURRENT_TIMESTAMP
+  )
+`);
+
+// --- Claude table (flexible document store for .md, .json, etc.) ---
+db.exec(`
+  CREATE TABLE IF NOT EXISTS claude (
+    id TEXT PRIMARY KEY,
+    category TEXT NOT NULL,
+    name TEXT NOT NULL,
+    content TEXT NOT NULL,
+    meta TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
   )
 `);
 
@@ -186,4 +199,32 @@ function deleteMachine(id) {
   return db.prepare('DELETE FROM machines WHERE id = ?').run(id).changes > 0;
 }
 
-module.exports = { getApps, getApp, upsertApp, deleteApp, getMachines, upsertMachine, deleteMachine };
+// --- Claude ---
+function getClaude(category) {
+  if (category) return db.prepare('SELECT * FROM claude WHERE category = ? ORDER BY updated_at DESC').all(category);
+  return db.prepare('SELECT * FROM claude ORDER BY updated_at DESC').all();
+}
+
+function getClaudeItem(id) {
+  return db.prepare('SELECT * FROM claude WHERE id = ?').get(id) || null;
+}
+
+function upsertClaude(data) {
+  db.prepare(`
+    INSERT INTO claude (id, category, name, content, meta)
+    VALUES (@id, @category, @name, @content, @meta)
+    ON CONFLICT(id) DO UPDATE SET
+      category=@category, name=@name, content=@content, meta=@meta, updated_at=datetime('now')
+  `).run({ id: data.id, category: data.category, name: data.name, content: data.content, meta: data.meta || null });
+  return getClaudeItem(data.id);
+}
+
+function deleteClaude(id) {
+  return db.prepare('DELETE FROM claude WHERE id = ?').run(id).changes > 0;
+}
+
+module.exports = {
+  getApps, getApp, upsertApp, deleteApp,
+  getMachines, upsertMachine, deleteMachine,
+  getClaude, getClaudeItem, upsertClaude, deleteClaude,
+};
