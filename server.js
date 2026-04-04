@@ -4,8 +4,6 @@ const path = require('path');
 const fs = require('fs');
 const { execSync, spawn } = require('child_process');
 const QRCode = require('qrcode');
-const swaggerUi = require('swagger-ui-express');
-const swaggerDoc = require('./swagger.json');
 const db = require('./db');
 
 const app = express();
@@ -19,15 +17,6 @@ const NPM_PATH = (() => {
 })();
 
 app.use(express.json());
-app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDoc, {
-  customCss: `
-    .swagger-ui .topbar { display: none }
-    .swagger-ui .models { display: none }
-    body { background: #1a1a2e }
-    .swagger-ui { font-family: -apple-system, BlinkMacSystemFont, 'SF Mono', monospace }
-  `,
-  customSiteTitle: 'Local Apps — API Docs',
-}));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // --- Caddy + /etc/hosts management ---
@@ -331,19 +320,6 @@ app.post('/api/apps', (req, res) => {
   res.status(201).json(result);
 });
 
-// Alias: register a new app (same logic as POST /api/apps)
-app.post('/api/register', (req, res) => {
-  const { id } = req.body;
-  if (!id) return res.status(400).json({ error: 'id is required' });
-
-  const infra = setupInfra(id, req.body);
-  const merged = { ...req.body, ...infra };
-  if (!merged.healthUrl && merged.localUrl) merged.healthUrl = merged.localUrl;
-
-  const result = db.upsertApp(merged);
-  broadcast({ type: 'reload' });
-  res.status(201).json(result);
-});
 
 app.put('/api/apps/:id', (req, res) => {
   const existing = db.getApp(req.params.id);
@@ -677,6 +653,82 @@ async function startupSync() {
 // --- Boot ---
 checkAll();
 setInterval(checkAll, CHECK_INTERVAL);
+
+// ─── Claude Sessions API (used by Claude dashboard on LAN) ──────────────────
+const CLAUDE_DIR = path.join(os.homedir(), '.claude', 'projects');
+const STALE_DAYS = 7;
+
+function readFirstBytesSync(filePath, maxBytes = 12288) {
+  let fd = -1;
+  try {
+    fd = fs.openSync(filePath, 'r');
+    const buf = Buffer.alloc(maxBytes);
+    const bytesRead = fs.readSync(fd, buf, 0, maxBytes, 0);
+    return buf.subarray(0, bytesRead).toString('utf-8');
+  } catch { return ''; }
+  finally { if (fd >= 0) try { fs.closeSync(fd); } catch {} }
+}
+
+function parseSessionFast(filePath) {
+  let customTitle = null, firstMessage = '', createdAt = '';
+  try {
+    const chunk = readFirstBytesSync(filePath, 12288);
+    const lines = chunk.split('\n').filter(Boolean);
+    if (lines.length > 1) lines.pop();
+    for (const line of lines) {
+      try {
+        const d = JSON.parse(line);
+        if (!createdAt && d.timestamp) createdAt = d.timestamp;
+        if (d.type === 'custom-title' && d.customTitle) customTitle = d.customTitle;
+        if (!firstMessage && d.type === 'user') {
+          const c = d.message?.content;
+          const text = typeof c === 'string' ? c
+            : Array.isArray(c) ? (c.find(x => x.type === 'text')?.text ?? '') : '';
+          if (text.trim()) firstMessage = text.slice(0, 120);
+        }
+        if (createdAt && firstMessage) break;
+      } catch {}
+    }
+  } catch {}
+  if (!createdAt) {
+    try { createdAt = fs.statSync(filePath).birthtime.toISOString(); } catch { createdAt = new Date().toISOString(); }
+  }
+  return { customTitle, firstMessage, createdAt };
+}
+
+app.get('/api/claude/sessions', (req, res) => {
+  if (!fs.existsSync(CLAUDE_DIR)) return res.json({ projects: [] });
+
+  const projects = [];
+  for (const folder of fs.readdirSync(CLAUDE_DIR)) {
+    const folderPath = path.join(CLAUDE_DIR, folder);
+    try { if (!fs.statSync(folderPath).isDirectory()) continue; } catch { continue; }
+
+    const sessions = [];
+    for (const file of fs.readdirSync(folderPath).filter(f => f.endsWith('.jsonl'))) {
+      const filePath = path.join(folderPath, file);
+      const stat = fs.statSync(filePath);
+      const parsed = parseSessionFast(filePath);
+      const daysSince = (Date.now() - stat.mtime.getTime()) / 86400000;
+      sessions.push({
+        id: file.replace('.jsonl', ''),
+        filePath,
+        sizeBytes: stat.size,
+        customTitle: parsed.customTitle,
+        title: parsed.firstMessage,
+        createdAt: parsed.createdAt,
+        updatedAt: stat.mtime.toISOString(),
+        stale: daysSince > STALE_DAYS,
+      });
+    }
+    sessions.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+    if (sessions.length > 0) {
+      projects.push({ project: folder, path: folder.replace(/-/g, '/'), sessions });
+    }
+  }
+  projects.sort((a, b) => new Date(b.sessions[0]?.updatedAt ?? 0) - new Date(a.sessions[0]?.updatedAt ?? 0));
+  res.json({ machine: os.hostname(), projects });
+});
 
 app.listen(PORT, () => {
   console.log(`\n  Local Apps running at:`);
