@@ -304,9 +304,16 @@ app.get('/api/apps/:id', (req, res) => {
   res.json(a);
 });
 
+// Validate app id: lowercase alphanumeric, hyphens only, 1-64 chars
+function isValidId(id) {
+  return typeof id === 'string' && /^[a-z0-9][a-z0-9-]{0,63}$/.test(id);
+}
+
 app.post('/api/apps', (req, res) => {
   const { id } = req.body;
-  if (!id) return res.status(400).json({ error: 'id is required' });
+  if (!id || typeof id !== 'string') return res.status(400).json({ error: 'id is required (string)' });
+  if (!isValidId(id)) return res.status(400).json({ error: 'id must be lowercase alphanumeric/hyphens, 1-64 chars' });
+  if (req.body.name && typeof req.body.name !== 'string') return res.status(400).json({ error: 'name must be a string' });
 
   // Auto-setup infra (caddy, hosts, launch agent)
   const infra = setupInfra(id, req.body);
@@ -905,6 +912,12 @@ app.post('/api/claude/command/:plugin/:command', (req, res) => {
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
+});
+
+// Global error handler — no stack traces leaked
+app.use((err, req, res, _next) => {
+  console.error(err.message);
+  res.status(400).json({ error: 'Bad request' });
 });
 
 app.listen(PORT, () => {

@@ -142,6 +142,9 @@
   .machine-tab .tab-remove:hover { color:var(--down); }
   .machine-add { display:flex; align-items:center; justify-content:center; width:26px; height:26px; background:none; border:1px dashed var(--border); color:var(--muted); font-size:14px; border-radius:50%; cursor:pointer; transition:all 0.15s; }
   .machine-add:hover { border-color:var(--text); color:var(--text); }
+  @media (max-width: 768px) {
+    .lan-col, th:nth-child(3) { display:none; }
+  }
 </style>
 </head>
 <body>
@@ -157,7 +160,6 @@
     </div>
     <div style="display:flex;align-items:center;gap:10px">
       <a href="/gallery.html" class="help-btn" title="Gallery" style="text-decoration:none;font-size:13px">📸</a>
-      <a href="/docs" class="help-btn" title="API Docs" style="text-decoration:none;font-size:11px">API</a>
       <button class="help-btn" onclick="toggleHelp()" title="Quick Reference">?</button>
       <div style="position:relative">
       <button id="qrBtn" onclick="toggleQR()" title="Show LAN QR code" style="background:none;border:none;outline:none;cursor:pointer;padding:0;line-height:1;opacity:0.35;transition:opacity 0.15s;-webkit-tap-highlight-color:transparent;user-select:none" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity=document.getElementById('qrPopover').style.display!=='none'?'1':'0.35'">
@@ -195,32 +197,36 @@
       <h2 style="font-size:15px;font-weight:700">AI Instruction</h2>
       <button onclick="copyBlock('helpAI',this)" style="background:rgba(255,255,255,0.08);border:1px solid var(--border);color:var(--text);font-family:inherit;font-size:11px;padding:5px 14px;border-radius:6px;cursor:pointer;transition:all 0.15s;font-weight:600">Copy</button>
     </div>
-    <div class="help-code" id="helpAI">Register this app with my local-apps monitor by making a POST request:
+    <div class="help-code" id="helpAI">Register this app with the local-apps monitor:
 
 POST http://localhost:9876/api/apps
 Content-Type: application/json
 
-Required fields:
-- "id": app name (lowercase, kebab-case)
-- "localPath": absolute path to the project root
+Required:
+- "id": app slug (lowercase, kebab-case)
+- "name": display name
+- "localPath": absolute path to project root
 
-Optional fields (auto-generated if omitted):
+Optional (auto-generated if omitted):
 - "localUrl": defaults to next available port (http://localhost:PORT)
 - "healthUrl": defaults to localUrl
 - "repo": GitHub URL
-- "startCommand": defaults to "npm run dev" (also supports "npm start", "bun dev", etc.)
+- "startCommand": defaults to "npm run dev"
 - "logPath": defaults to /tmp/{id}.log
+- "prodUrl": production URL
+- "icon": favicon path
+- "noScreenshot": skip screenshots (boolean)
 
 The monitor will automatically:
 1. Assign a dedicated port if not provided
 2. Create a Caddy reverse proxy at http://{id}.localhost
 3. Create a macOS LaunchAgent plist
-4. Begin health-checking every 10 seconds
+4. Begin health-checking every 10s
 
 Example:
 curl -X POST http://localhost:9876/api/apps \
   -H "Content-Type: application/json" \
-  -d '{"id":"my-app","localPath":"/Users/me/Sites/my-app"}'</div>
+  -d '{"id":"my-app","name":"My App","localPath":"/Users/bheng/Sites/my-app"}'</div>
   </div>
 </div>
 
@@ -230,9 +236,9 @@ curl -X POST http://localhost:9876/api/apps \
     <table>
       <thead>
         <tr>
-          <th style="width:33%;text-align:left">App</th>
-          <th style="width:34%;text-align:center">Address</th>
-          <th style="width:33%;text-align:right">Actions</th>
+          <th style="width:33.3%;text-align:left">App</th>
+          <th style="width:33.3%;text-align:center">Hostname</th>
+          <th style="width:33.3%;text-align:center">LAN</th>
         </tr>
       </thead>
       <tbody id="appTable"><tr><td colspan="3" class="no-apps">Loading...</td></tr></tbody>
@@ -267,7 +273,7 @@ const deviceMap = { 'mac mini': 'mac-mini', 'macbook pro': 'macbook-pro', 'macbo
 function deviceSvg(model) {
   if (!model) return null;
   const key = Object.keys(deviceMap).find(k => model.toLowerCase().includes(k));
-  return key ? `/devices/${deviceMap[key]}.svg` : null;
+  return key ? `/devices/${deviceMap[key]}.png` : null;
 }
 
 async function loadMachines() {
@@ -282,7 +288,6 @@ function renderTabs() {
   const localHost = (localInfo.hostname || '').replace('.local', '') || 'Local';
   const localIcon = deviceSvg(localInfo.model);
   let html = `<button class="machine-tab${!activeMachine ? ' active' : ''}" onclick="switchMachine(null)">
-    <span class="tab-dot online"></span>
     ${localIcon ? `<img src="${localIcon}" width="14" height="14" style="opacity:0.7">` : ''}
     ${escHtml(localHost)}
   </button>`;
@@ -291,7 +296,6 @@ function renderTabs() {
     const name = (m.hostname || m.ip).replace('.local', '');
     const isActive = activeMachine === m.id;
     html += `<button class="machine-tab${isActive ? ' active' : ''}" onclick="switchMachine('${m.id}')">
-      <span class="tab-dot online" id="tab-dot-${m.id}"></span>
       ${icon ? `<img src="${icon}" width="14" height="14" style="opacity:0.7">` : ''}
       ${escHtml(name)}
     </button>`;
@@ -395,10 +399,8 @@ function renderTable() {
           <a class="app-name" href="${app.lanUrl || app.localUrl || '#'}" target="_blank" onclick="event.stopPropagation()">${app.name}</a>
         </div>
       </td>
-      <td style="text-align:center"><a href="${app.lanUrl || app.localUrl || '#'}" target="_blank" onclick="event.stopPropagation()" style="color:var(--text);font-size:11px;text-decoration:none">${(app.lanUrl || app.localUrl || '').replace(/^https?:\/\//, '') || '—'}</a></td>
-      <td style="text-align:right">
-        ${!activeMachine && app.hasScreenshots ? `<a href="/gallery.html?app=${app.id}" onclick="event.stopPropagation()" title="View screenshots" style="color:var(--muted);font-size:13px;text-decoration:none;line-height:1;transition:color 0.15s" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--muted)'">📸</a>` : ''}
-      </td>
+      <td style="text-align:center"><a href="${app.caddyUrl || app.localUrl || '#'}" target="_blank" onclick="event.stopPropagation()" style="color:var(--text);font-size:11px;text-decoration:none">${(app.caddyUrl || app.localUrl || '').replace(/^https?:\/\//, '') || '—'}</a></td>
+      <td class="lan-col" style="text-align:center"><a href="${app.lanUrl || app.localUrl || '#'}" target="_blank" onclick="event.stopPropagation()" style="color:var(--muted);font-size:11px;text-decoration:none">${(app.lanUrl || app.localUrl || '').replace(/^https?:\/\//, '') || '—'}</a></td>
     </tr>`;
   }).join('');
 }
@@ -542,6 +544,7 @@ function openModal(app) {
     !activeMachine && app.caddyUrl ? ['🔗 Caddy', `<a href="${app.caddyUrl}" target="_blank" onclick="event.stopPropagation()">${app.caddyUrl}</a>`] : null,
     !activeMachine && app.localPath ? ['📁 Path', pathVal(app.localPath)] : null,
     !activeMachine && app.logPath ?   ['📄 Log',  pathVal(app.logPath)] : null,
+    !activeMachine && app.hasScreenshots ? ['📸 Screenshots', `<a href="/gallery.html?app=${app.id}" target="_blank" onclick="event.stopPropagation()">View Gallery</a>`] : null,
   ].filter(Boolean);
 
   const modalRows = document.getElementById('modalRows');
@@ -554,10 +557,18 @@ function openModal(app) {
 
   if (!activeMachine) {
     if (isDown && app.logPath) {
+      const logWrap = document.createElement('div');
+      logWrap.style.cssText = 'position:relative;margin-top:8px';
       const logDiv = document.createElement('div');
       logDiv.className = 'log-block';
       logDiv.textContent = 'Loading log…';
-      modalRows.appendChild(logDiv);
+      const copyBtn = document.createElement('button');
+      copyBtn.textContent = 'Copy';
+      copyBtn.style.cssText = 'position:absolute;top:8px;right:8px;background:rgba(255,255,255,0.08);border:1px solid var(--border);color:var(--muted);font-family:inherit;font-size:10px;padding:3px 10px;border-radius:4px;cursor:pointer;z-index:1';
+      copyBtn.onclick = () => { navigator.clipboard.writeText(logDiv.textContent); copyBtn.textContent = 'Copied!'; setTimeout(() => copyBtn.textContent = 'Copy', 1500); };
+      logWrap.appendChild(copyBtn);
+      logWrap.appendChild(logDiv);
+      modalRows.appendChild(logWrap);
       fetch('/api/log/' + app.id).then(r => r.json()).then(d => {
         logDiv.textContent = d.lines.length ? d.lines.join('\n') : '(no log output)';
         logDiv.scrollTop = logDiv.scrollHeight;
