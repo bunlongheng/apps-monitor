@@ -321,11 +321,42 @@ function isValidId(id) {
   return typeof id === 'string' && /^[a-z0-9][a-z0-9-]{0,63}$/.test(id);
 }
 
+// --- Port conflict check ---
+function isPortTaken(port, excludeId) {
+  for (const a of db.getApps()) {
+    if (excludeId && a.id === excludeId) continue;
+    if (a.localUrl) {
+      try { if (parseInt(new URL(a.localUrl).port) === port) return a.id; } catch {}
+    }
+    if (a.healthUrl) {
+      try { if (parseInt(new URL(a.healthUrl).port) === port) return a.id; } catch {}
+    }
+  }
+  return null;
+}
+
 app.post('/api/apps', (req, res) => {
   const { id } = req.body;
   if (!id || typeof id !== 'string') return res.status(400).json({ error: 'id is required (string)' });
   if (!isValidId(id)) return res.status(400).json({ error: 'id must be lowercase alphanumeric/hyphens, 1-64 chars' });
   if (req.body.name && typeof req.body.name !== 'string') return res.status(400).json({ error: 'name must be a string' });
+
+  // Check for port conflict if a port is specified
+  const requestedUrl = req.body.localUrl || req.body.healthUrl;
+  if (requestedUrl) {
+    try {
+      const requestedPort = parseInt(new URL(requestedUrl).port);
+      const conflictApp = isPortTaken(requestedPort, id);
+      if (conflictApp) {
+        const suggested = getNextAvailablePort();
+        return res.status(409).json({
+          error: `Port ${requestedPort} is already used by "${conflictApp}"`,
+          suggestedPort: suggested,
+          suggestedUrl: suggested ? `http://localhost:${suggested}` : null
+        });
+      }
+    } catch {}
+  }
 
   // Auto-setup infra (caddy, hosts, launch agent)
   const infra = setupInfra(id, req.body);
@@ -335,14 +366,34 @@ app.post('/api/apps', (req, res) => {
   if (!merged.healthUrl && merged.localUrl) merged.healthUrl = merged.localUrl;
 
   const result = db.upsertApp(merged);
+  // Extract assigned port for clear response
+  let assignedPort = null;
+  try { assignedPort = parseInt(new URL(result.localUrl).port); } catch {}
   broadcast({ type: 'reload' });
-  res.status(201).json(result);
+  res.status(201).json({ ...result, assignedPort });
 });
 
 
 app.put('/api/apps/:id', (req, res) => {
   const existing = db.getApp(req.params.id);
   if (!existing) return res.status(404).json({ error: 'not found' });
+
+  // Check for port conflict on update
+  const requestedUrl = req.body.localUrl || req.body.healthUrl;
+  if (requestedUrl) {
+    try {
+      const requestedPort = parseInt(new URL(requestedUrl).port);
+      const conflictApp = isPortTaken(requestedPort, req.params.id);
+      if (conflictApp) {
+        const suggested = getNextAvailablePort();
+        return res.status(409).json({
+          error: `Port ${requestedPort} is already used by "${conflictApp}"`,
+          suggestedPort: suggested,
+          suggestedUrl: suggested ? `http://localhost:${suggested}` : null
+        });
+      }
+    } catch {}
+  }
 
   // Re-setup infra if localUrl or localPath changed
   const data = { ...req.body, id: req.params.id };
