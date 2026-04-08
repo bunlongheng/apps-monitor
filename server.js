@@ -215,7 +215,7 @@ function getState(id) {
   return state[id];
 }
 
-// --- HTTP health check (GET, accept any 1xx-4xx response as "up") ---
+// --- HTTP health check (GET, only 2xx/3xx = "up") ---
 const http = require('http');
 const https = require('https');
 function tcpCheck(url) {
@@ -225,7 +225,7 @@ function tcpCheck(url) {
       const mod = parsed.protocol === 'https:' ? https : http;
       const req = mod.get(url, { timeout: 3000, headers: { 'User-Agent': 'local-apps' } }, res => {
         res.destroy();
-        resolve(res.statusCode < 500);
+        resolve(res.statusCode >= 200 && res.statusCode < 400);
       });
       req.on('error', () => resolve(false));
       req.on('timeout', () => { req.destroy(); resolve(false); });
