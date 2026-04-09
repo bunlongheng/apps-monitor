@@ -269,16 +269,21 @@ async function checkAll() {
       if (newStatus === 'down') broadcast({ type: 'alert', id: appCfg.id, name: appCfg.name });
     }
 
-    // Auto-restart: hub only — agent mode just reports status
+    // Auto-restart: hub only, with 90s cooldown to prevent restart loops
     if (IS_HUB && newStatus === 'down' && (appCfg.launchAgentPath || appCfg.launchAgent)) {
-      try {
-        if (appCfg.launchAgentPath) {
-          execSync(`launchctl load -w "${appCfg.launchAgentPath}" 2>/dev/null || launchctl start "${appCfg.launchAgent}" 2>/dev/null || true`);
-        } else {
-          execSync(`launchctl start "${appCfg.launchAgent}" 2>/dev/null || true`);
-        }
-        console.log(`  ↻ auto-restart: ${appCfg.id}`);
-      } catch {}
+      const lastRestart = s.lastRestart || 0;
+      const cooldown = 90000; // 90s - give apps time to compile
+      if (Date.now() - lastRestart > cooldown) {
+        try {
+          if (appCfg.launchAgentPath) {
+            execSync(`launchctl load -w "${appCfg.launchAgentPath}" 2>/dev/null || launchctl start "${appCfg.launchAgent}" 2>/dev/null || true`);
+          } else {
+            execSync(`launchctl start "${appCfg.launchAgent}" 2>/dev/null || true`);
+          }
+          s.lastRestart = Date.now();
+          console.log(`  ↻ auto-restart: ${appCfg.id}`);
+        } catch {}
+      }
     }
   }
 }
