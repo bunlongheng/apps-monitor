@@ -59,12 +59,27 @@ function addCaddyEntry(id, port) {
 }
 
 function removeCaddyEntry(id) {
-  const caddyContent = getCaddyfile();
-  // Remove the full block for this id
-  const regex = new RegExp(`\\n?http://${id}\\.localhost\\s*\\{[^}]*(?:\\{[^}]*\\}[^}]*)*\\}\\n?`, 'g');
-  const updated = caddyContent.replace(regex, '\n');
-  if (updated !== caddyContent) {
-    writeCaddyfile(updated.replace(/\n{3,}/g, '\n\n').trim() + '\n');
+  const lines = getCaddyfile().split('\n');
+  const marker = `http://${id}.localhost`;
+  const out = [];
+  let depth = 0;
+  let skipping = false;
+  for (const line of lines) {
+    if (!skipping && line.trim().startsWith(marker)) {
+      skipping = true;
+      depth = 0;
+    }
+    if (skipping) {
+      depth += (line.match(/\{/g) || []).length;
+      depth -= (line.match(/\}/g) || []).length;
+      if (depth <= 0 && line.includes('}')) { skipping = false; continue; }
+      continue;
+    }
+    out.push(line);
+  }
+  const updated = out.join('\n').replace(/\n{3,}/g, '\n\n').trim() + '\n';
+  if (updated !== getCaddyfile()) {
+    writeCaddyfile(updated);
     reloadCaddy();
   }
 }
