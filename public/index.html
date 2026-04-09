@@ -256,9 +256,9 @@ curl -X POST http://localhost:9876/api/apps \
     <table>
       <thead>
         <tr>
-          <th style="width:33.3%;text-align:left">App</th>
-          <th style="width:33.3%;text-align:center">Hostname</th>
-          <th style="width:33.3%;text-align:center">LAN</th>
+          <th style="width:40%;text-align:left">App</th>
+          <th style="width:30%;text-align:right">Hostname</th>
+          <th style="width:30%;text-align:right">LAN</th>
         </tr>
       </thead>
       <tbody id="appTable"><tr><td colspan="3" class="no-apps">Loading...</td></tr></tbody>
@@ -438,11 +438,11 @@ function renderTable() {
         <div style="display:flex;align-items:center;gap:12px">
           <span class="dot ${app.status}"></span>
           <span class="app-icon-wrap" id="icon-${app.id}">${appIcon(app)}</span>
-          <a class="app-name" href="${app.lanUrl || app.localUrl || '#'}" target="_blank" onclick="event.stopPropagation()">${app.name}</a>
+          <a class="app-name" href="${app.lanUrl || app.localUrl || '#'}" target="_blank" onclick="event.stopPropagation()">${app.name}</a>${app.prodUrl ? `<a href="${app.prodUrl}" target="_blank" onclick="event.stopPropagation()" style="font-size:9px;color:rgba(255,255,255,0.25);text-decoration:none;margin-left:6px;transition:color 0.15s" onmouseover="this.style.color='#22c55e'" onmouseout="this.style.color='rgba(255,255,255,0.25)'">${app.prodUrl.replace('https://','').replace('.vercel.app','')}</a>` : ''}
         </div>
       </td>
-      <td style="text-align:center"><a href="${app.caddyUrl || app.localUrl || '#'}" target="_blank" onclick="event.stopPropagation()" style="color:var(--text);font-size:11px;text-decoration:none">${(app.caddyUrl || app.localUrl || '').replace(/^https?:\/\//, '') || '—'}</a></td>
-      <td class="lan-col" style="text-align:center"><a href="${app.lanUrl || app.localUrl || '#'}" target="_blank" onclick="event.stopPropagation()" style="color:var(--muted);font-size:11px;text-decoration:none">${(app.lanUrl || app.localUrl || '').replace(/^https?:\/\//, '') || '—'}</a> <a href="/gallery.html?app=${app.id}" onclick="event.stopPropagation()" title="Screenshots" style="text-decoration:none;font-size:12px;opacity:0.4;transition:opacity 0.15s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.4'">📷</a></td>
+      <td style="text-align:right"><a href="${app.caddyUrl || app.localUrl || '#'}" target="_blank" onclick="event.stopPropagation()" style="color:var(--text);font-size:11px;text-decoration:none">${(app.caddyUrl || app.localUrl || '').replace(/^https?:\/\//, '') || '—'}</a></td>
+      <td class="lan-col" style="text-align:right"><a href="${app.lanUrl || app.localUrl || '#'}" target="_blank" onclick="event.stopPropagation()" style="color:var(--muted);font-size:11px;text-decoration:none">${(app.lanUrl || app.localUrl || '').replace(/^https?:\/\//, '') || '—'}</a> <a href="/gallery.html?app=${app.id}" onclick="event.stopPropagation()" title="Screenshots" style="text-decoration:none;font-size:12px;opacity:0.4;transition:opacity 0.15s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.4'">📷</a></td>
     </tr>`;
   }).join('');
 }
