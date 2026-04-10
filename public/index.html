@@ -257,9 +257,9 @@ curl -X POST http://localhost:9876/api/apps \
       <thead>
         <tr>
           <th style="width:35%;text-align:left">App</th>
-          <th style="width:25%;text-align:right">Hostname</th>
-          <th style="width:25%;text-align:right">LAN</th>
-          <th style="width:15%;text-align:right"></th>
+          <th style="width:25%;text-align:left">Hostname</th>
+          <th style="width:25%;text-align:left">LAN</th>
+          <th style="width:15%;text-align:right">Actions</th>
         </tr>
       </thead>
       <tbody id="appTable"><tr><td colspan="4" class="no-apps">Loading...</td></tr></tbody>
@@ -442,9 +442,9 @@ function renderTable() {
           <a class="app-name" href="${app.lanUrl || app.localUrl || '#'}" target="_blank" onclick="event.stopPropagation()">${app.name}</a>
         </div>
       </td>
-      <td style="text-align:right"><a href="${app.caddyUrl || app.localUrl || '#'}" target="_blank" onclick="event.stopPropagation()" style="color:var(--text);font-size:11px;text-decoration:none">${(app.caddyUrl || app.localUrl || '').replace(/^https?:\/\//, '') || '—'}</a></td>
-      <td class="lan-col" style="text-align:right"><a href="${app.lanUrl || app.localUrl || '#'}" target="_blank" onclick="event.stopPropagation()" style="color:var(--text);font-size:11px;text-decoration:none">${(app.lanUrl || app.localUrl || '').replace(/^https?:\/\//, '') || '—'}</a></td>
-      <td style="text-align:right;white-space:nowrap">${app.prodUrl ? `<a href="${app.prodUrl}" target="_blank" onclick="event.stopPropagation()" title="Vercel" style="text-decoration:none;opacity:0.35;transition:opacity 0.15s;display:inline-block;vertical-align:middle" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.35'"><svg width="14" height="14" viewBox="0 0 76 65" fill="white"><path d="M37.5274 0L75.0548 65H0L37.5274 0Z"/></svg></a> ` : ''}<a href="/gallery.html?app=${app.id}" onclick="event.stopPropagation()" title="Screenshots" style="text-decoration:none;opacity:0.35;transition:opacity 0.15s;display:inline-block;vertical-align:middle" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.35'">📷</a></td>
+      <td style="text-align:left"><a href="${app.caddyUrl || app.localUrl || '#'}" target="_blank" onclick="event.stopPropagation()" style="color:var(--text);font-size:11px;text-decoration:none">${(app.caddyUrl || app.localUrl || '').replace(/^https?:\/\//, '') || '—'}</a></td>
+      <td class="lan-col" style="text-align:left"><a href="${app.lanUrl || app.localUrl || '#'}" target="_blank" onclick="event.stopPropagation()" style="color:var(--text);font-size:11px;text-decoration:none">${(app.lanUrl || app.localUrl || '').replace(/^https?:\/\//, '') || '—'}</a></td>
+      <td style="text-align:right;white-space:nowrap">${app.prodUrl ? `<a href="${app.prodUrl}" target="_blank" onclick="event.stopPropagation()" title="Vercel" style="text-decoration:none;opacity:0.6;transition:opacity 0.15s;display:inline-block;vertical-align:middle" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'"><svg width="14" height="14" viewBox="0 0 76 65" fill="white"><path d="M37.5274 0L75.0548 65H0L37.5274 0Z"/></svg></a> ` : ''}<a href="/gallery.html?app=${app.id}" onclick="event.stopPropagation()" title="Screenshots" style="text-decoration:none;opacity:0.6;transition:opacity 0.15s;display:inline-block;vertical-align:middle" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">📷</a></td>
     </tr>`;
   }).join('');
 }
