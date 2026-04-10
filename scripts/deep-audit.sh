@@ -91,8 +91,9 @@ for entry in "${APPS[@]}"; do
       # Try to require it - if it fails, rebuild
       RESULT=$(cd "$dir" && node -e "try{require('$mod');console.log('ok')}catch(e){console.log(e.code||'fail')}" 2>&1)
       if [ "$RESULT" != "ok" ]; then
-        echo "  FIX $name - $mod broken ($RESULT), rebuilding" >> "$LOG"
+        echo "  FIX $name - $mod broken ($RESULT), rebuilding + clearing .next" >> "$LOG"
         cd "$dir" && npm rebuild "$mod" >> "$LOG" 2>&1
+        rm -rf "$dir/.next" "$dir/node_modules/.cache" 2>/dev/null
         FIXED=$((FIXED + 1))
       fi
     fi
