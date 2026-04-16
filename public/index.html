@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Local Apps</title>
 <link rel="icon" type="image/x-icon" href="/favicon.ico">
 <link rel="icon" type="image/png" sizes="32x32" href="/icon-32.png">
@@ -31,7 +31,7 @@
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
   ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.25); }
-  body { background: var(--bg); color: var(--text); font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px; }
+  body { background: var(--bg); color: var(--text); font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px; touch-action: manipulation; }
 
   /* Icon generation spin */
   @keyframes icon-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
@@ -652,7 +652,7 @@ function openModal(app) {
       : `<span>${r.value || ''}${r.extra || ''}</span>`;
     const copyVal = r.url || r.value || '';
     const copyBtn = copyVal
-      ? `<button onclick="event.stopPropagation();navigator.clipboard.writeText('${escHtml(copyVal)}');this.textContent='Copied';setTimeout(()=>this.textContent='Copy',1200)" style="background:rgba(255,255,255,0.06);border:1px solid var(--border);color:var(--muted);font-family:inherit;font-size:9px;padding:2px 8px;border-radius:4px;cursor:pointer;flex-shrink:0">Copy</button>`
+      ? `<button onclick="event.stopPropagation();navigator.clipboard.writeText('${escHtml(copyVal)}');this.innerHTML='&#10003;';this.style.color='#22c55e';setTimeout(()=>{this.innerHTML='&#128203;';this.style.color=''},1200)" style="background:none;border:none;color:var(--muted);font-size:14px;padding:4px 6px;cursor:pointer;flex-shrink:0;opacity:0.4;transition:opacity 0.15s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.4'">&#128203;</button>`
       : '';
     return `
       <div class="modal-row" style="display:flex;align-items:center">
