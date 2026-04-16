@@ -278,9 +278,12 @@ curl -X POST http://localhost:9876/api/apps \
 <div class="modal-backdrop" id="modalBackdrop" onclick="closeModal(event)">
   <div class="modal">
     <button class="modal-close" onclick="closeModal()">✕</button>
-    <div class="modal-header">
-      <span class="dot" id="modalDot"></span>
-      <span class="modal-title" id="modalTitle"></span>
+    <div class="modal-header" style="display:flex;align-items:center;justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span class="dot" id="modalDot"></span>
+        <span class="modal-title" id="modalTitle"></span>
+      </div>
+      <span id="modalChecked" style="color:var(--muted);font-size:10px"></span>
     </div>
     <div class="modal-rows" id="modalRows"></div>
     <div id="modalScreenshots"></div>
@@ -618,28 +621,46 @@ function openModal(app) {
     ? ` &nbsp;<button class="start-btn" id="start-${app.id}" ${isStarting ? 'disabled' : ''} onclick="startApp('${app.id}',this)">${isStarting ? '⟳ Starting…' : '▶ Start'}</button>`
     : '';
 
-  const checkedStr = app.lastChecked ? new Date(app.lastChecked).toLocaleString() : '';
+  // Set uptime in header
+  document.getElementById('modalChecked').textContent = app.lastChecked ? new Date(app.lastChecked).toLocaleString() : '';
 
-  const rows = [
-    port ? ['🔌 Port', `${port} ${startBtnHtml} <span style="float:right;color:var(--muted);font-size:10px">${checkedStr}</span>`] : null,
-    app.localUrl ?        ['🌐 Local',      `<a href="${app.localUrl}" target="_blank" onclick="event.stopPropagation()">${app.localUrl}</a>`] : null,
-    app.lanUrl ?          ['📡 LAN',        `<a href="${app.lanUrl}" target="_blank" onclick="event.stopPropagation()">${app.lanUrl}</a>`] : null,
-    app.tailscaleUrl ?    ['🔗 Tailscale',  `<a href="${app.tailscaleUrl}" target="_blank" onclick="event.stopPropagation()">${app.tailscaleUrl}</a>`] : null,
-    app.caddyUrl ?        ['🏠 Caddy',      `<a href="${app.caddyUrl}" target="_blank" onclick="event.stopPropagation()">${app.caddyUrl}</a>`] : null,
-    app.prodUrl ?         ['🚀 Prod',       `<a href="${app.prodUrl}" target="_blank" onclick="event.stopPropagation()">${app.prodUrl.replace('https://','')}</a>`] : null,
-    app.repo ?            ['🐙 GitHub',     `<a href="${app.repo}" target="_blank" onclick="event.stopPropagation()">⇗ ${app.repo.replace('https://github.com/','')}</a>`] : null,
-    !activeMachine && app.localPath ? ['📁 Path', pathVal(app.localPath)] : null,
-    !activeMachine && app.logPath ?   ['📄 Log',  pathVal(app.logPath)] : null,
-    app.hasScreenshots ?  ['📸 Screenshots', `<a href="/gallery.html?app=${app.id}" target="_blank" onclick="event.stopPropagation()">View Gallery</a>`] : null,
-  ].filter(Boolean);
+  function linkRow(icon, label, url, display) {
+    if (!url) return null;
+    return [icon + ' ' + label, url, display || url];
+  }
+
+  const links = [
+    port ? { icon: '🔌', label: 'Port', value: String(port), url: null, extra: startBtnHtml } : null,
+    linkRow('🌐', 'Local', app.localUrl),
+    linkRow('📡', 'LAN', app.lanUrl),
+    linkRow('🔗', 'Tailscale', app.tailscaleUrl),
+    linkRow('🏠', 'Caddy', app.caddyUrl),
+    linkRow('🚀', 'Prod', app.prodUrl, app.prodUrl?.replace('https://','')),
+    linkRow('🐙', 'GitHub', app.repo, app.repo?.replace('https://github.com/','')),
+    !activeMachine && app.localPath ? { icon: '📁', label: 'Path', value: app.localPath, url: null } : null,
+    !activeMachine && app.logPath ? { icon: '📄', label: 'Log', value: app.logPath, url: null } : null,
+    app.hasScreenshots ? { icon: '📸', label: 'Screenshots', value: 'View Gallery', url: '/gallery.html?app=' + app.id } : null,
+  ].filter(Boolean).map(r => {
+    if (Array.isArray(r)) return { icon: '', label: r[0], value: r[2], url: r[1] };
+    return r;
+  });
 
   const modalRows = document.getElementById('modalRows');
-  modalRows.innerHTML = rows.map(([k, v]) => `
-    <div class="modal-row">
-      <span class="modal-key">${k}</span>
-      <span class="modal-val">${v}</span>
-    </div>
-  `).join('');
+  modalRows.innerHTML = links.map(r => {
+    const display = r.url
+      ? `<a href="${escHtml(r.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="color:var(--accent);text-decoration:none">${escHtml(r.value || r.url)}</a>`
+      : `<span>${r.value || ''}${r.extra || ''}</span>`;
+    const copyVal = r.url || r.value || '';
+    const copyBtn = copyVal
+      ? `<button onclick="event.stopPropagation();navigator.clipboard.writeText('${escHtml(copyVal)}');this.textContent='Copied';setTimeout(()=>this.textContent='Copy',1200)" style="background:rgba(255,255,255,0.06);border:1px solid var(--border);color:var(--muted);font-family:inherit;font-size:9px;padding:2px 8px;border-radius:4px;cursor:pointer;flex-shrink:0">Copy</button>`
+      : '';
+    return `
+      <div class="modal-row" style="display:flex;align-items:center">
+        <span class="modal-key">${r.icon ? r.icon + ' ' : ''}${r.label}</span>
+        <span class="modal-val" style="flex:1">${display}</span>
+        ${copyBtn}
+      </div>`;
+  }).join('');
 
   if (!activeMachine) {
     if (isDown && app.logPath) {
