@@ -314,18 +314,26 @@ async function checkAll() {
 }
 
 // --- Status route (dashboard) ---
+// Cache screenshot existence - refresh every 60s
+const screenshotCache = {};
+function refreshScreenshotCache() {
+  for (const a of db.getApps()) {
+    const ssIndex = path.join(__dirname, 'public', 'screenshots', a.id, 'index.json');
+    try {
+      if (fs.existsSync(ssIndex)) {
+        const idx = JSON.parse(fs.readFileSync(ssIndex, 'utf8'));
+        screenshotCache[a.id] = (idx.desktop?.length > 0) || (idx.mobile?.length > 0);
+      } else { screenshotCache[a.id] = false; }
+    } catch { screenshotCache[a.id] = false; }
+  }
+}
+refreshScreenshotCache();
+setInterval(refreshScreenshotCache, 60000);
+
 app.get('/api/status', (req, res) => {
   res.header('Access-Control-Allow-Origin', '*');
   const apps = db.getApps().map(a => {
     const s = getState(a.id);
-    const ssIndex = path.join(__dirname, 'public', 'screenshots', a.id, 'index.json');
-    let hasScreenshots = false;
-    if (fs.existsSync(ssIndex)) {
-      try {
-        const idx = JSON.parse(fs.readFileSync(ssIndex, 'utf8'));
-        hasScreenshots = (idx.desktop?.length > 0) || (idx.mobile?.length > 0);
-      } catch {}
-    }
     return {
       id: a.id,
       name: a.name,
@@ -344,7 +352,7 @@ app.get('/api/status', (req, res) => {
       localPath: a.localPath || null,
       logPath: a.logPath || null,
       hostname: os.hostname(),
-      hasScreenshots,
+      hasScreenshots: screenshotCache[a.id] || false,
     };
   });
   res.json({ apps, lanIp: LAN_IP, tailscaleIp: TAILSCALE_IP, machineModel: MACHINE_MODEL, machineRole: MACHINE_ROLE, monitorUrl: `http://${LAN_IP}:${PORT}` });
@@ -800,24 +808,29 @@ const CRON_JOBS = [
   { id: 'nightly-summary',    hour: '6 AM',  desc: 'Aggregate results, post to stickies',                   autoFix: false, log: '/tmp/nightly-summary.log',      summary: null },
 ];
 
-app.get('/api/crons', (req, res) => {
-  const results = CRON_JOBS.map(c => {
+// Cache cron data - refresh every 30s instead of reading files on every request
+let cronCache = { data: null, ts: 0 };
+function refreshCronCache() {
+  cronCache.data = CRON_JOBS.map(c => {
     const result = { ...c, lastRun: null, lastLines: null, summaryData: null };
-    // Get last modified time of log
     try {
       const stat = fs.statSync(c.log);
       result.lastRun = stat.mtime.toISOString();
-      // Last 10 lines
       const content = fs.readFileSync(c.log, 'utf8');
       result.lastLines = content.split('\n').slice(-12).join('\n');
     } catch {}
-    // Get summary JSON
     if (c.summary) {
       try { result.summaryData = JSON.parse(fs.readFileSync(c.summary, 'utf8')); } catch {}
     }
     return result;
   });
-  res.json(results);
+  cronCache.ts = Date.now();
+}
+refreshCronCache();
+setInterval(refreshCronCache, 30000);
+
+app.get('/api/crons', (req, res) => {
+  res.json(cronCache.data || []);
 });
 
 app.get('/api/crons/:id/log', (req, res) => {
