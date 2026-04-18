@@ -6,7 +6,16 @@ const { execSync, spawn } = require('child_process');
 const QRCode = require('qrcode');
 const db = require('./db');
 
+const compression = require('compression');
 const app = express();
+app.use(compression());
+app.use((req, res, next) => {
+  // Cache static files for 1 hour, API responses for 0
+  if (req.path.match(/\.(ico|png|svg|jpg|css|js|woff2?)$/)) {
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+  }
+  next();
+});
 const PORT = 9876;
 const CHECK_INTERVAL = 30000;
 
