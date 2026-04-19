@@ -379,14 +379,9 @@ function updateHeader(hostname, model, ip) {
   const access = detectAccessMode();
   document.getElementById('machineTitle').textContent = shortHost;
 
-  // Show access mode indicator
-  const modeLabel = { local: '', lan: 'LAN', tailscale: 'Tailscale', caddy: 'Caddy', remote: 'Remote' }[access.mode] || '';
-  const displayIp = access.mode === 'tailscale' ? location.host : (access.mode === 'lan' ? location.host : ip || '');
-  const badge = modeLabel ? `<span style="font-size:9px;font-weight:700;color:${access.color};background:${access.color}15;border:1px solid ${access.color}30;padding:1px 6px;border-radius:4px;margin-left:6px">${modeLabel}</span>` : '';
-  document.getElementById('machineInfo').innerHTML = (displayIp || '') + badge;
-
-  // Set page title with access mode
-  document.title = shortHost + (modeLabel ? ` (${modeLabel})` : '') + ' — Local Apps';
+  const displayIp = (access.mode === 'tailscale' || access.mode === 'lan') ? location.host : ip || '';
+  document.getElementById('machineInfo').textContent = displayIp;
+  document.title = shortHost + ' — Local Apps';
 
   const iconSrc = deviceSvg(model);
   const icon = document.getElementById('deviceIcon');
