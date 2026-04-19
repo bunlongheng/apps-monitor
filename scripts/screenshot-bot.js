@@ -607,8 +607,8 @@ async function flowMindmaps(page, appDir, creds) {
   }
 }
 
-async function flow3pi(page, appDir, creds) {
-  const base = process.env.REMOTE_URL || 'http://localhost:3333';
+async function flow3pi(page, appDir, creds, cfg) {
+  const base = cfg?.localUrl || process.env.REMOTE_URL || 'http://localhost:3333';
 
   // 1. Login via landing
   await page.goto(base, { waitUntil: 'commit', timeout: 60000 });
@@ -750,7 +750,7 @@ async function runMode(browser, cfg, creds, rules, modeDir, isM) {
 
   try {
     if (customFlows[cfg.id]) {
-      await customFlows[cfg.id](page, modeDir, creds);
+      await customFlows[cfg.id](page, modeDir, creds, cfg);
     } else {
       // 1. Landing
       await page.goto(cfg.localUrl, { waitUntil: 'domcontentloaded', timeout: 12000 });
